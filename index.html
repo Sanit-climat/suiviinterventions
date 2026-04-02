@@ -371,6 +371,20 @@ firebase.initializeApp({
       <span class="stitle-txt" id="listTitle">Toutes les interventions</span>
       <span id="filterBadge" style="display:none" class="fbadge" onclick="clearSF()">× Effacer le filtre</span>
     </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <input class="srch" id="srchVille" placeholder="🏙 Ville..." oninput="renderList(D.curBai)" style="width:140px">
+      <select id="srchCat" onchange="renderList(D.curBai)" style="padding:6px 12px;border:1px solid var(--brd);border-radius:20px;font-size:12px;background:#fff;color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;outline:none;cursor:pointer">
+        <option value="">Toutes catégories</option>
+        <option>Plomberie</option>
+        <option>Maçonnerie / Étanchéité</option>
+        <option>Peinture</option>
+        <option>Menuiserie</option>
+        <option>TCE</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#dc2626;cursor:pointer;padding:5px 12px;border:1px solid #fecaca;border-radius:20px;background:#fef2f2;white-space:nowrap">
+        <input type="checkbox" id="srchUrg" onchange="renderList(D.curBai)" style="accent-color:#dc2626"> 🔴 Urgents
+      </label>
+    </div>
     <div class="vbar">
       <div class="bpf" id="bpFilters"></div>
       <div class="vc">
@@ -429,6 +443,7 @@ firebase.initializeApp({
             <option value="ec">En cours</option><option value="te">Terminé</option><option value="fa">Facturé</option>
           </select>
         </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><input type="checkbox" id="f-urg" style="width:18px;height:18px;cursor:pointer;accent-color:#dc2626"><label for="f-urg" style="font-size:13px;font-weight:700;color:#dc2626;cursor:pointer">🔴 URGENT</label></div>
       </div>
       <div class="fr"><label class="fl">Description des travaux <span>*</span></label><textarea class="fta" id="f-des" rows="3" placeholder="Ex : Fourniture et pose d'un ballon ECS 150L..."></textarea></div>
       <div class="fr2">
@@ -442,6 +457,16 @@ firebase.initializeApp({
       <div class="fr"><label class="fl">Adresse d'intervention <span>*</span></label><input class="fi" id="f-adr" placeholder="4 Impasse des Loisirs, 84000 Avignon"></div>
       <div class="fr2"><div><label class="fl">Montant HT (€)</label><input class="fi" id="f-mnt" placeholder="570,00"></div></div>
       <div class="fr"><label class="fl">Notes internes</label><textarea class="fta" id="f-not" rows="2" placeholder="Matériaux, accès, observations..."></textarea></div>
+      <div class="fr">
+        <label class="fl">📎 Pièces jointes</label>
+        <div id="attachZone" onclick="document.getElementById('f-attach').click()" ondragover="event.preventDefault();this.style.borderColor='var(--or)'" ondragleave="this.style.borderColor='var(--brd2)'" ondrop="dropAttach(event)" style="border:2px dashed var(--brd2);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;background:var(--bg3);transition:border-color .15s">
+          <div style="font-size:22px;margin-bottom:5px">📎</div>
+          <div style="font-size:12px;font-weight:600;color:var(--tx2)">Cliquer ou glisser des fichiers</div>
+          <div style="font-size:10px;color:var(--tx3);margin-top:2px">Photos, PDF, documents · max 5MB/fichier</div>
+        </div>
+        <input type="file" id="f-attach" multiple accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="addAttachFiles(this.files)">
+        <div id="attachList" style="margin-top:8px;display:flex;flex-direction:column;gap:5px"></div>
+      </div>
     </div>
     <div class="mft">
       <button class="btn btn-g" onclick="closeModal('modal')">Annuler</button>
@@ -847,13 +872,26 @@ function renderBpFilters(){
 }
 function tfc(c){D.fc=D.fc===c?null:c;D.sel=null;updFBadge();renderList(D.curBai);document.getElementById('detPanel').style.display='none';}
 function gf(bid){
-  const q=(document.getElementById('srch')?.value||'').toLowerCase();
+  const q    = (document.getElementById('srch')?.value||'').toLowerCase();
+  const ville= (document.getElementById('srchVille')?.value||'').toLowerCase();
+  const cat2 = (document.getElementById('srchCat')?.value||'');
+  const urg  = document.getElementById('srchUrg')?.checked||false;
   return D.mis.filter(m=>{
-    if(m.bai!==bid)return false;if(D.fc&&m.cat!==D.fc)return false;if(D.fs&&m.sta!==D.fs)return false;
+    if(m.bai!==bid) return false;
+    if(D.fc && m.cat!==D.fc) return false;
+    if(cat2 && m.cat!==cat2) return false;
+    if(D.fs && m.sta!==D.fs) return false;
+    if(urg && !m.urg) return false;
+    if(ville){
+      const adrLow=(m.adr||'').toLowerCase();
+      const resLow=(m.resname||'').toLowerCase();
+      if(!adrLow.includes(ville)&&!resLow.includes(ville)) return false;
+    }
     if(q){const h=[m.ref,m.rec,m.des,m.dem,m.loc,m.adr,m.not,m.resname].join(' ').toLowerCase();if(!h.includes(q))return false;}
     return true;
   });
 }
+
 function sv(v){D.view=v;document.getElementById('vl').style.display=v==='l'?'block':'none';document.getElementById('vt').style.display=v==='t'?'block':'none';document.getElementById('vbl').className='vb'+(v==='l'?' on':'');document.getElementById('vbt').className='vb'+(v==='t'?' on':'');}
 function renderList(bid){
   const ms=gf(bid);
@@ -876,7 +914,7 @@ function renderList(bid){
       </div>
     </div></div>`;
   }).join('');
-  document.getElementById('vt').innerHTML=!ms.length?'<div class="nr">Aucune intervention</div>':`<div class="tw"><table class="dt"><thead><tr><th>N° BT</th><th>Date</th><th>Résidence</th><th>Catégorie</th><th>Description</th><th>Locataire</th><th>Tél.</th><th>Montant HT</th><th>Statut</th></tr></thead><tbody>`+ms.map(m=>{const k=CK[m.cat]||'tc',s=ST.find(x=>x.k===m.sta)||ST[0];return`<tr onclick="selM('${m.id}')"><td class="mn">${m.ref||'—'}</td><td>${m.dat||'—'}</td><td style="font-size:11px;font-weight:600;color:var(--tx2)">${m.resname||'—'}</td><td><span class="bdg b-${k}">${m.cat}</span></td><td>${m.des.slice(0,45)}${m.des.length>45?'…':''}</td><td>${m.loc||'—'}</td><td class="mn">${m.tel||'—'}</td><td style="font-weight:700;color:#16a34a">${m.mnt?m.mnt+' €':'—'}</td><td><span class="sb ${SC[m.sta]}">${s.l}</span></td></tr>`;}).join('')+'</tbody></table></div>';
+  document.getElementById('vt').innerHTML=!ms.length?'<div class="nr">Aucune intervention</div>':`<div class="tw"><table class="dt"><thead><tr><th>!</th><th>N° BT</th><th>Date</th><th>Résidence</th><th>Catégorie</th><th>Description</th><th>Locataire</th><th>Tél.</th><th>Montant HT</th><th>Statut</th></tr></thead><tbody>`+ms.map(m=>{const k=CK[m.cat]||'tc',s=ST.find(x=>x.k===m.sta)||ST[0];return`<tr onclick="selM('${m.id}')" style="${m.urg?'background:#fff5f5':''}"><td style="text-align:center">${m.urg?'<span class="urg-badge" style="padding:1px 5px">🔴</span>':''}</td><td class="mn">${m.ref||'—'}</td><td>${m.dat||'—'}</td><td style="font-size:11px;font-weight:600;color:var(--tx2)">${m.resname||'—'}</td><td><span class="bdg b-${k}">${m.cat}</span></td><td>${m.des.slice(0,45)}${m.des.length>45?'…':''}</td><td>${m.loc||'—'}</td><td class="mn">${m.tel||'—'}</td><td style="font-weight:700;color:#16a34a">${m.mnt?m.mnt+' €':'—'}</td><td><span class="sb ${SC[m.sta]}">${s.l}</span></td></tr>`;}).join('')+'</tbody></table></div>';
   sv(D.view);
 }
 function selM(id){D.sel=id;renderList(D.curBai);const m=D.mis.find(x=>x.id===id);if(m)showDet(m);setTimeout(()=>{document.getElementById('detPanel').scrollIntoView({behavior:'smooth',block:'nearest'});},80);}
@@ -886,6 +924,7 @@ function showDet(m){
   dp.innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
     <div>
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap">
+        ${m.urg?'<span class="urg-badge" style="font-size:11px;padding:3px 10px">🔴 URGENT</span>':''}
         <span class="bdg b-${k}">${m.cat}</span>
         ${m.resname?`<span style="font-size:11px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 9px;border-radius:5px">🏘 ${m.resname}</span>`:''}
         ${m.ref?`<span class="bt-tag bt-bt">BT ${m.ref}</span>`:''}
@@ -923,7 +962,9 @@ function showDet(m){
   <div class="dw"><div class="dw-h">Notes internes</div><div class="dw-b">
     <textarea class="ntxt" id="ntx" placeholder="Observations, matériaux, accès...">${m.not||''}</textarea>
     <div style="display:flex;justify-content:flex-end;margin-top:9px"><button class="btn btn-p" onclick="snot('${m.id}')">Sauvegarder</button></div>
-  </div></div>`;
+  </div></div>
+  <div class="dw"><div class="dw-h">📎 Pièces jointes</div><div class="dw-b" id="detAttach"><div style="font-size:12px;color:var(--tx3)">Chargement...</div></div></div>`;
+  loadAttachments(m.id).then(atts=>{const el=document.getElementById("detAttach");if(el)el.innerHTML=renderAttachmentsFull(atts,m.id);});
 }
 async function ust(id,v){try{await fbUpdateMission(id,{sta:v});}catch(e){alert('Erreur : '+e.message);}}
 
@@ -932,16 +973,21 @@ async function snot(id){const not=document.getElementById('ntx').value;try{await
 async function del(id){if(!confirm('Supprimer ?'))return;try{await fbDelMission(id);}catch(e){alert('Erreur : '+e.message);return;}D.sel=null;document.getElementById('detPanel').style.display='none';}
 
 function toast(msg){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--or);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;z-index:9999;font-weight:700;box-shadow:0 4px 20px rgba(249,115,22,.4);font-family:Plus Jakarta Sans,sans-serif';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
-function clrForm(){['f-ref','f-rec','f-des','f-dem','f-loc','f-tel','f-adr','f-not','f-del','f-mnt'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';e.classList.remove('af');}});document.getElementById('f-cat').value='';document.getElementById('f-sta').value='at';document.getElementById('f-dat').value=today();clearPdf();}
+function clrForm(){['f-ref','f-rec','f-des','f-dem','f-loc','f-tel','f-adr','f-not','f-del','f-mnt'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';e.classList.remove('af');}});document.getElementById('f-cat').value='';document.getElementById('f-sta').value='at';document.getElementById('f-dat').value=today();if(document.getElementById('f-urg'))document.getElementById('f-urg').checked=false;pendingAttachments=[];renderAttachList();clearPdf();}
 function openAdd(){D.eid=null;document.getElementById('mttl').textContent='Nouvelle intervention';clrForm();rebuildBailSelect('f-bai');document.getElementById('f-bai').value=D.curBai||D.bails[0]?.id||'';updateResSelect();document.getElementById('modal').classList.add('open');}
-function openEdit(id){const m=D.mis.find(x=>x.id===id);if(!m)return;D.eid=id;document.getElementById('mttl').textContent="Modifier l'intervention";clearPdf();rebuildBailSelect('f-bai');const map={ref:m.ref,rec:m.rec,des:m.des,dem:m.dem,loc:m.loc,tel:m.tel,adr:m.adr,not:m.not,del:m.del,mnt:m.mnt};Object.entries(map).forEach(([k,v])=>{const e=document.getElementById(`f-${k}`);if(e){e.value=v||'';e.classList.remove('af');}});document.getElementById('f-bai').value=m.bai;document.getElementById('f-dat').value=m.dat;document.getElementById('f-cat').value=m.cat;document.getElementById('f-sta').value=m.sta;updateResSelect();document.getElementById('f-res').value=m.res||'';document.getElementById('modal').classList.add('open');}
+function openEdit(id){const m=D.mis.find(x=>x.id===id);if(!m)return;D.eid=id;document.getElementById('mttl').textContent="Modifier l'intervention";clearPdf();rebuildBailSelect('f-bai');const map={ref:m.ref,rec:m.rec,des:m.des,dem:m.dem,loc:m.loc,tel:m.tel,adr:m.adr,not:m.not,del:m.del,mnt:m.mnt};Object.entries(map).forEach(([k,v])=>{const e=document.getElementById(`f-${k}`);if(e){e.value=v||'';e.classList.remove('af');}});document.getElementById('f-bai').value=m.bai;document.getElementById('f-dat').value=m.dat;document.getElementById('f-cat').value=m.cat;document.getElementById('f-sta').value=m.sta;updateResSelect();document.getElementById('f-res').value=m.res||'';if(document.getElementById('f-urg'))document.getElementById('f-urg').checked=!!m.urg;document.getElementById('modal').classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 async function save(){
   const bai=document.getElementById('f-bai').value,cat=document.getElementById('f-cat').value,des=document.getElementById('f-des').value.trim(),adr=document.getElementById('f-adr').value.trim();
   if(!cat||!des||!adr){alert('Champs obligatoires : Catégorie, Description, Adresse');return;}
-  const resId=document.getElementById('f-res').value,resname=resId?D.res.find(r=>r.id===resId)?.name:'';
-  const data={bai,dat:document.getElementById('f-dat').value,ref:document.getElementById('f-ref').value.trim(),rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc:document.getElementById('f-loc').value.trim(),tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId||'',resname:resname||''};
-  try{await fbSaveMission(data);}catch(e){alert('Erreur Firebase : '+e.message);return;}
+  const resId=document.getElementById('f-res').value,resname=resId?D.res.find(r=>r.id===resId)?.name:'';const urg=document.getElementById('f-urg')?.checked||false;
+  const data={bai,dat:document.getElementById('f-dat').value,ref:document.getElementById('f-ref').value.trim(),rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc:document.getElementById('f-loc').value.trim(),tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId||'',resname:resname||'',urg};
+  let savedId;
+  try{savedId=await fbSaveMission(data);}catch(e){alert('Erreur Firebase : '+e.message);return;}
+  // Upload pièces jointes si présentes
+  if(pendingAttachments.length && savedId){
+    try{ await uploadAttachments(savedId); }catch(e){ console.error('PJ:',e); }
+  }
   closeModal('modal');D.curBai=bai;toast('Intervention enregistrée ✓');
 }
 function clearPdf(){document.getElementById('pres').style.display='none';document.getElementById('pfg').innerHTML='';document.getElementById('pfi').value='';}
@@ -1302,6 +1348,92 @@ function xpdf(raw){
   }
 }
 
+
+// ── PIÈCES JOINTES ───────────────────────────────────────────
+let pendingAttachments = []; // {file, name, size, preview}
+
+function addAttachFiles(files){
+  Array.from(files).forEach(file=>{
+    if(file.size > 5*1024*1024){ toast('⚠️ '+file.name+' dépasse 5MB'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingAttachments.push({file, name:file.name, size:file.size, data:e.target.result});
+      renderAttachList();
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('f-attach').value='';
+}
+
+function dropAttach(e){
+  e.preventDefault();
+  document.getElementById('attachZone').style.borderColor='var(--brd2)';
+  addAttachFiles(e.dataTransfer.files);
+}
+
+function renderAttachList(){
+  const el=document.getElementById('attachList');
+  if(!el)return;
+  if(!pendingAttachments.length){el.innerHTML='';return;}
+  el.innerHTML=pendingAttachments.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r)">
+      ${a.data&&a.file.type.startsWith('image/')
+        ?`<img src="${a.data}" style="width:36px;height:36px;object-fit:cover;border-radius:4px">`
+        :`<div style="width:36px;height:36px;background:var(--bg4);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px">📄</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.name}</div>
+        <div style="font-size:10px;color:var(--tx3)">${(a.size/1024).toFixed(0)} KB</div>
+      </div>
+      <button onclick="removePending(${i})" style="background:none;border:none;color:var(--rd);cursor:pointer;font-size:16px;padding:0 4px">×</button>
+    </div>`).join('');
+}
+
+function removePending(i){
+  pendingAttachments.splice(i,1);
+  renderAttachList();
+}
+
+// Stocker les PJ en base64 dans Firebase (pour petits fichiers < 1MB)
+// Pour les gros fichiers, on stocke juste le nom et un message d'info
+async function uploadAttachments(missionId){
+  if(!pendingAttachments.length) return [];
+  const attachData = pendingAttachments.map(a=>({
+    name: a.name,
+    size: a.size,
+    type: a.file.type,
+    // Stocker base64 uniquement si < 500KB (sinon trop lourd pour RTDB)
+    data: a.size < 500*1024 ? a.data : null,
+    uploadedAt: Date.now()
+  }));
+  // Sauvegarder dans Firebase sous /attachments/{missionId}
+  try{
+    await firebase.database().ref('attachments/'+missionId).set(attachData);
+  }catch(e){ console.error('Upload PJ:', e); }
+  return attachData;
+}
+
+async function loadAttachments(missionId){
+  try{
+    const snap = await firebase.database().ref('attachments/'+missionId).once('value');
+    return snap.val() || [];
+  }catch(e){ return []; }
+}
+
+function renderAttachmentsFull(attachments, missionId){
+  if(!attachments||!attachments.length) return '<div style="font-size:12px;color:var(--tx3)">Aucune pièce jointe</div>';
+  return attachments.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);margin-bottom:6px">
+      ${a.data&&a.type&&a.type.startsWith('image/')
+        ?`<img src="${a.data}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="window.open('${a.data}')">`
+        :`<div style="width:48px;height:48px;background:var(--bg4);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px">${a.type&&a.type.includes('pdf')?'📄':'📎'}</div>`}
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--tx)">${a.name}</div>
+        <div style="font-size:10px;color:var(--tx3)">${(a.size/1024).toFixed(0)} KB · ${new Date(a.uploadedAt).toLocaleDateString('fr-FR')}</div>
+        ${!a.data?'<div style="font-size:10px;color:var(--or)">⚠️ Fichier > 500KB — non prévisualisable</div>':''}
+      </div>
+      ${a.data?`<a href="${a.data}" download="${a.name}" class="btn btn-g" style="padding:4px 10px;font-size:11px">↓ Télécharger</a>`:''}
+    </div>`).join('');
+}
 
 init();
 </script></body></html>
