@@ -255,6 +255,20 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);c
 .cdot:hover{transform:scale(1.15)}
 .cdot.sel{border-color:var(--tx);box-shadow:0 0 0 2px #fff}
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:        "AIzaSyDRgVVeqwplx2l6Tgv0Q2KalxPO_0iXeRE",
+  authDomain:    "interventions-a-programmer.firebaseapp.com",
+  databaseURL:   "https://interventions-a-programmer-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:     "interventions-a-programmer",
+  storageBucket: "interventions-a-programmer.firebasestorage.app",
+  messagingSenderId: "438247591520",
+  appId:         "1:438247591520:web:53fd211b75dcf90d7ffd05"
+});
+</script>
 </head>
 <body>
 
@@ -268,6 +282,7 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);c
   <div class="hdr-sp"></div>
   <div class="hdr-btn" id="hdrBack" onclick="goHome()" style="display:none">← Accueil</div>
   <div class="hdr-btn" onclick="goSettings()">⚙ Paramètres</div>
+  <div id="fbStatus" style="font-size:11px;font-weight:600;color:#d97706;padding:0 8px;white-space:nowrap">⏳ Connexion...</div>
   <div class="hdr-stats" id="hs"></div>
 </div>
 
@@ -442,16 +457,108 @@ const DEFAULT_RESIDENCES=[
   {id:'r001',bai:'erilia-mrs',name:'Air Bel',adr:'13013 Marseille'},{id:'r002',bai:'erilia-mrs',name:'La Corniche',adr:'Marseille'},{id:'r003',bai:'erilia-mrs',name:'Les Figuiers',adr:'Marseille'},{id:'r004',bai:'erilia-mrs',name:'Résidence du Port',adr:'Marseille'},{id:'r005',bai:'erilia-mrs',name:'Les Oliviers',adr:'Marseille'},
   {id:'r010',bai:'erilia-avi',name:"L'Émeraude",adr:'84000 Avignon'},{id:'r011',bai:'erilia-avi',name:'Les Lavandes',adr:'84000 Avignon'},{id:'r012',bai:'erilia-avi',name:'Les Platanes',adr:'84000 Avignon'},{id:'r013',bai:'erilia-avi',name:'Résidence Mistral',adr:'84000 Avignon'},{id:'r014',bai:'erilia-avi',name:'Les Pins',adr:'84000 Avignon'}
 ];
+const DEFAULT_BAILLEURS=[{id:'vilogia',name:'Vilogia',color:'#3b82f6'},{id:'erilia-mrs',name:'Erilia Marseille',color:'#0ea5e9'},{id:'erilia-avi',name:'Erilia Avignon',color:'#f97316'},{id:'agence',name:'Agence Immo',color:'#60a5fa'},{id:'part',name:'Particuliers',color:'#fb923c'}];
+const DEFAULT_RESIDENCES=[
+  {id:'r001',bai:'erilia-mrs',name:'Air Bel',adr:'13013 Marseille'},{id:'r002',bai:'erilia-mrs',name:'La Corniche',adr:'Marseille'},{id:'r003',bai:'erilia-mrs',name:'Les Figuiers',adr:'Marseille'},{id:'r004',bai:'erilia-mrs',name:'Résidence du Port',adr:'Marseille'},{id:'r005',bai:'erilia-mrs',name:'Les Oliviers',adr:'Marseille'},
+  {id:'r010',bai:'erilia-avi',name:"L'Émeraude",adr:'84000 Avignon'},{id:'r011',bai:'erilia-avi',name:'Les Lavandes',adr:'84000 Avignon'},{id:'r012',bai:'erilia-avi',name:'Les Platanes',adr:'84000 Avignon'},{id:'r013',bai:'erilia-avi',name:'Résidence Mistral',adr:'84000 Avignon'},{id:'r014',bai:'erilia-avi',name:'Les Pins',adr:'84000 Avignon'}
+];
 let D={mis:[],bails:[],res:[],curBai:null,sel:null,fc:null,fs:null,eid:null,ebid:null,erid:null,view:'l'};
-const SK='intertrack_v8';
-function ld(){try{const r=localStorage.getItem(SK);if(r){const p=JSON.parse(r);D.mis=p.mis||[];D.bails=p.bails||[...DEFAULT_BAILLEURS];D.res=p.res||[...DEFAULT_RESIDENCES];}else{D.mis=[];D.bails=[...DEFAULT_BAILLEURS];D.res=[...DEFAULT_RESIDENCES];}}catch(e){D.mis=[];D.bails=[...DEFAULT_BAILLEURS];D.res=[...DEFAULT_RESIDENCES];}}
-function sd(){localStorage.setItem(SK,JSON.stringify({mis:D.mis,bails:D.bails,res:D.res}));try{bc.postMessage('u');}catch(e){}}
-let bc;try{bc=new BroadcastChannel('it8');bc.onmessage=()=>{ld();refreshCurrent();};}catch(e){bc={postMessage:()=>{}};}
+
+// ── FIREBASE REALTIME DATABASE ────────────────────────────────
+const DB_URL = 'https://interventions-a-programmer-default-rtdb.europe-west1.firebasedatabase.app';
+const refMis   = firebase.database().ref('interventions');
+const refBails = firebase.database().ref('bailleurs');
+const refRes   = firebase.database().ref('residences');
+
+function setStatus(msg, color){
+  const el = document.getElementById('fbStatus');
+  if(el){ el.textContent = msg; el.style.color = color; }
+}
+
+function startListeners(){
+  refBails.on('value', snap => {
+    const val = snap.val();
+    D.bails = val ? Object.entries(val).map(([id,v]) => ({id, ...v})) : [...DEFAULT_BAILLEURS];
+    rebuildBailSelect('f-bai');
+    if(document.getElementById('pageSettings').classList.contains('active')) renderBailleursList();
+    refreshCurrent();
+  });
+  refRes.on('value', snap => {
+    const val = snap.val();
+    D.res = val ? Object.entries(val).map(([id,v]) => ({id, ...v})) : [];
+    if(document.getElementById('pageSettings').classList.contains('active')) renderResidencesList();
+    refreshCurrent();
+  });
+  refMis.orderByChild('createdAt').on('value', snap => {
+    const val = snap.val();
+    D.mis = val ? Object.entries(val).map(([id,v]) => ({id, ...v})).reverse() : [];
+    refreshCurrent();
+    renderHdrStats();
+  });
+  setStatus('🟢 Connecté', '#16a34a');
+}
+
+async function initDefaults(){
+  const snap = await refBails.once('value');
+  if(!snap.val()){
+    const ub = {};
+    DEFAULT_BAILLEURS.forEach(b => { const {id,...data} = b; ub[id] = data; });
+    await refBails.update(ub);
+    const ur = {};
+    DEFAULT_RESIDENCES.forEach(r => { const {id,...data} = r; ur[id] = data; });
+    await refRes.update(ur);
+  }
+}
+
+async function fbSaveMission(data){
+  const payload = {...data, createdAt: data.createdAt || Date.now()};
+  delete payload.id;
+  if(D.eid){ await refMis.child(D.eid).update(payload); return D.eid; }
+  else { const r = await refMis.push(payload); return r.key; }
+}
+async function fbDelMission(id){ await refMis.child(id).remove(); }
+async function fbUpdateMission(id, partial){ await refMis.child(id).update(partial); }
+async function fbSaveBailleur(id, data){
+  if(id){ await refBails.child(id).update(data); return id; }
+  else { const r = await refBails.push(data); return r.key; }
+}
+async function fbDelBailleur(id){ await refBails.child(id).remove(); }
+async function fbSaveResidence(id, data){
+  if(id){ await refRes.child(id).update(data); return id; }
+  else { const r = await refRes.push(data); return r.key; }
+}
+async function fbDelResidence(id){ await refRes.child(id).remove(); }
+
+
 function getBail(id){return D.bails.find(b=>b.id===id);}
 function getResForBail(bid){return D.res.filter(r=>r.bai===bid);}
 function today(){return new Date().toISOString().split('T')[0];}
 function refreshCurrent(){if(D.curBai)renderBailleur(D.curBai);else renderHome();renderHdrStats();}
-function init(){ld();document.getElementById('f-dat').value=today();rebuildBailSelect('f-bai');renderHome();renderHdrStats();}
+function init(){
+  document.getElementById('f-dat').value=today();
+  rebuildBailSelect('f-bai');
+  renderHome();renderHdrStats();
+  setStatus('⏳ Connexion à Firebase...','#d97706');
+  // Test de connexion immédiat
+  firebase.database().ref('.info/connected').on('value', snap => {
+    if(snap.val()===true){
+      setStatus('🟢 Connecté','#16a34a');
+    } else {
+      setStatus('🔴 Hors ligne','#dc2626');
+    }
+  });
+  initDefaults()
+    .then(()=>startListeners())
+    .catch(e=>{
+      setStatus('🔴 Erreur: '+e.message,'#dc2626');
+      console.error('Firebase error:', e);
+      // Afficher l'erreur dans la page
+      const gstats = document.getElementById('gstats');
+      if(gstats) gstats.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#dc2626;font-weight:600;font-size:13px">🔴 Erreur Firebase : '+e.message+'<br><br><span style="font-weight:400;color:#7f1d1d">Vérifiez les règles Realtime Database dans Firebase Console (onglet Règles → .read: true, .write: true) et rafraîchissez la page.</span></div>';
+    });
+}
+function rebuildBailSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML=D.bails.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');}
+function updateResSelect(){const bid=document.getElementById('f-bai').value;document.getElementById('f-res').innerHTML=`<option value="">— Aucune —</option>`+getResForBail(bid).map(r=>`<option value="${r.id}">${r.name}${r.adr?' – '+r.adr:''}</option>`).join('');}
 function rebuildBailSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML=D.bails.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');}
 function updateResSelect(){const bid=document.getElementById('f-bai').value;document.getElementById('f-res').innerHTML=`<option value="">— Aucune —</option>`+getResForBail(bid).map(r=>`<option value="${r.id}">${r.name}${r.adr?' – '+r.adr:''}</option>`).join('');}
 function renderHdrStats(){
@@ -538,28 +645,28 @@ let selColor=COLORS[0];
 function openAddBailleur(){D.ebid=null;selColor=COLORS[0];document.getElementById('mBailTtl').textContent='Nouveau bailleur';document.getElementById('mb-name').value='';renderColorPicker();document.getElementById('modalBailleur').classList.add('open');}
 function openEditBailleur(id){const b=getBail(id);if(!b)return;D.ebid=id;selColor=b.color;document.getElementById('mBailTtl').textContent='Modifier le bailleur';document.getElementById('mb-name').value=b.name;renderColorPicker();document.getElementById('modalBailleur').classList.add('open');}
 function renderColorPicker(){document.getElementById('colorPicker').innerHTML=COLORS.map(c=>`<div class="cdot${c===selColor?' sel':''}" style="background:${c}" onclick="selColor='${c}';renderColorPicker()"></div>`).join('');}
-function saveBailleur(){
+async function saveBailleur(){
   const name=document.getElementById('mb-name').value.trim();if(!name){alert('Nom obligatoire');return;}
-  if(D.ebid){const b=getBail(D.ebid);if(b){b.name=name;b.color=selColor;}}
-  else{if(D.bails.find(b=>b.name.toLowerCase()===name.toLowerCase())){alert('Ce bailleur existe déjà');return;}D.bails.push({id:'b'+Date.now(),name,color:selColor});}
-  sd();closeModal('modalBailleur');goSettings();rebuildBailSelect('f-bai');toast('Bailleur enregistré ✓');
+  if(!D.ebid&&D.bails.find(b=>b.name.toLowerCase()===name.toLowerCase())){alert('Ce bailleur existe déjà');return;}
+  try{await fbSaveBailleur(D.ebid||null,{name,color:selColor});}catch(e){alert('Erreur : '+e.message);return;}
+  closeModal('modalBailleur');toast('Bailleur enregistré ✓');
 }
-function delBailleur(id){
-  const b=getBail(id);if(!b)return;
+async function delBailleur(id){
   const cnt=D.mis.filter(m=>m.bai===id).length;
   if(cnt>0&&!confirm(`Ce bailleur a ${cnt} intervention(s). Supprimer quand même ?`))return;
-  D.bails=D.bails.filter(x=>x.id!==id);D.res=D.res.filter(r=>r.bai!==id);
-  sd();renderBailleursList();renderResidencesList();rebuildBailSelect('f-bai');toast('Bailleur supprimé');
+  try{await fbDelBailleur(id);const rids=D.res.filter(r=>r.bai===id).map(r=>r.id);for(const rid of rids)await fbDelResidence(rid);}catch(e){alert('Erreur : '+e.message);}
+  toast('Bailleur supprimé');
 }
 function openAddResidence(){D.erid=null;document.getElementById('mResTtl').textContent='Nouvelle résidence';document.getElementById('mr-name').value='';document.getElementById('mr-adr').value='';rebuildBailSelect('mr-bai');if(D.curBai)document.getElementById('mr-bai').value=D.curBai;document.getElementById('modalResidence').classList.add('open');}
 function openEditResidence(id){const r=D.res.find(x=>x.id===id);if(!r)return;D.erid=id;document.getElementById('mResTtl').textContent='Modifier la résidence';rebuildBailSelect('mr-bai');document.getElementById('mr-bai').value=r.bai;document.getElementById('mr-name').value=r.name;document.getElementById('mr-adr').value=r.adr||'';document.getElementById('modalResidence').classList.add('open');}
-function saveResidence(){
+async function saveResidence(){
   const bai=document.getElementById('mr-bai').value,name=document.getElementById('mr-name').value.trim();if(!name){alert('Nom obligatoire');return;}
-  if(D.erid){const r=D.res.find(x=>x.id===D.erid);if(r){r.bai=bai;r.name=name;r.adr=document.getElementById('mr-adr').value.trim();}}
-  else{D.res.push({id:'r'+Date.now(),bai,name,adr:document.getElementById('mr-adr').value.trim()});}
-  sd();closeModal('modalResidence');renderResidencesList();renderBailleursList();if(D.curBai===bai)updateResSelect();toast('Résidence enregistrée ✓');
+  const data={bai,name,adr:document.getElementById('mr-adr').value.trim()};
+  try{await fbSaveResidence(D.erid||null,data);}catch(e){alert('Erreur : '+e.message);return;}
+  closeModal('modalResidence');toast('Résidence enregistrée ✓');
 }
-function delResidence(id){if(!confirm('Supprimer ?'))return;D.res=D.res.filter(x=>x.id!==id);sd();renderResidencesList();renderBailleursList();toast('Résidence supprimée');}
+async function delResidence(id){if(!confirm('Supprimer ?'))return;try{await fbDelResidence(id);}catch(e){alert('Erreur : '+e.message);}toast('Résidence supprimée');}
+
 
 function openBailleur(bid){D.curBai=bid;D.sel=null;D.fc=null;D.fs=null;renderBailleur(bid);}
 function renderBailleur(bid){
@@ -679,22 +786,24 @@ function showDet(m){
     <div style="display:flex;justify-content:flex-end;margin-top:9px"><button class="btn btn-p" onclick="snot('${m.id}')">Sauvegarder</button></div>
   </div></div>`;
 }
-function ust(id,v){const m=D.mis.find(x=>x.id===id);if(m){m.sta=v;sd();const bid=D.curBai,bm=D.mis.filter(m=>m.bai===bid);renderBpStats(bid,bm);renderBpCats(bm);renderBpCharts(bm,getBail(bid));renderList(bid);renderHdrStats();}}
-function snot(id){const m=D.mis.find(x=>x.id===id);if(m){m.not=document.getElementById('ntx').value;sd();toast('Notes sauvegardées ✓');}}
-function del(id){if(!confirm('Supprimer ?'))return;D.mis=D.mis.filter(x=>x.id!==id);D.sel=null;sd();renderBailleur(D.curBai);renderHdrStats();}
+async function ust(id,v){try{await fbUpdateMission(id,{sta:v});}catch(e){alert('Erreur : '+e.message);}}
+
+async function snot(id){const not=document.getElementById('ntx').value;try{await fbUpdateMission(id,{not});}catch(e){alert('Erreur : '+e.message);return;}toast('Notes sauvegardées ✓');}
+
+async function del(id){if(!confirm('Supprimer ?'))return;try{await fbDelMission(id);}catch(e){alert('Erreur : '+e.message);return;}D.sel=null;document.getElementById('detPanel').style.display='none';}
+
 function toast(msg){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--or);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;z-index:9999;font-weight:700;box-shadow:0 4px 20px rgba(249,115,22,.4);font-family:Plus Jakarta Sans,sans-serif';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
 function clrForm(){['f-ref','f-rec','f-des','f-dem','f-loc','f-tel','f-adr','f-not','f-del','f-mnt'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';e.classList.remove('af');}});document.getElementById('f-cat').value='';document.getElementById('f-sta').value='at';document.getElementById('f-dat').value=today();clearPdf();}
 function openAdd(){D.eid=null;document.getElementById('mttl').textContent='Nouvelle intervention';clrForm();rebuildBailSelect('f-bai');document.getElementById('f-bai').value=D.curBai||D.bails[0]?.id||'';updateResSelect();document.getElementById('modal').classList.add('open');}
 function openEdit(id){const m=D.mis.find(x=>x.id===id);if(!m)return;D.eid=id;document.getElementById('mttl').textContent="Modifier l'intervention";clearPdf();rebuildBailSelect('f-bai');const map={ref:m.ref,rec:m.rec,des:m.des,dem:m.dem,loc:m.loc,tel:m.tel,adr:m.adr,not:m.not,del:m.del,mnt:m.mnt};Object.entries(map).forEach(([k,v])=>{const e=document.getElementById(`f-${k}`);if(e){e.value=v||'';e.classList.remove('af');}});document.getElementById('f-bai').value=m.bai;document.getElementById('f-dat').value=m.dat;document.getElementById('f-cat').value=m.cat;document.getElementById('f-sta').value=m.sta;updateResSelect();document.getElementById('f-res').value=m.res||'';document.getElementById('modal').classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function save(){
+async function save(){
   const bai=document.getElementById('f-bai').value,cat=document.getElementById('f-cat').value,des=document.getElementById('f-des').value.trim(),adr=document.getElementById('f-adr').value.trim();
   if(!cat||!des||!adr){alert('Champs obligatoires : Catégorie, Description, Adresse');return;}
   const resId=document.getElementById('f-res').value,resname=resId?D.res.find(r=>r.id===resId)?.name:'';
-  const data={bai,dat:document.getElementById('f-dat').value,ref:document.getElementById('f-ref').value.trim(),rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc:document.getElementById('f-loc').value.trim(),tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId,resname};
-  if(D.eid){const i=D.mis.findIndex(x=>x.id===D.eid);if(i>=0)D.mis[i]={...D.mis[i],...data};}
-  else{data.id='M'+Date.now();D.mis.unshift(data);}
-  sd();closeModal('modal');D.curBai=bai;renderBailleur(bai);renderHdrStats();
+  const data={bai,dat:document.getElementById('f-dat').value,ref:document.getElementById('f-ref').value.trim(),rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc:document.getElementById('f-loc').value.trim(),tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId||'',resname:resname||''};
+  try{await fbSaveMission(data);}catch(e){alert('Erreur Firebase : '+e.message);return;}
+  closeModal('modal');D.curBai=bai;toast('Intervention enregistrée ✓');
 }
 function clearPdf(){document.getElementById('pres').style.display='none';document.getElementById('pfg').innerHTML='';document.getElementById('pfi').value='';}
 function pdrop(e){e.preventDefault();document.getElementById('pdz').classList.remove('dv');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')ppdf(f);}
