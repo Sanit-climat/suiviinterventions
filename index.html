@@ -290,6 +290,7 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);c
 .cdot.sel{border-color:var(--tx);box-shadow:0 0 0 2px #fff}
 </style>
 <!-- Firebase SDK -->
+<script src="./bpu.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
@@ -323,8 +324,14 @@ firebase.initializeApp({
 <!-- HOME -->
 <div class="page active" id="pageHome">
   <div class="home">
-    <div class="page-eyebrow">Tableau de bord</div>
-    <div class="page-title">Suivi des <span>interventions</span></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:0">
+      <div>
+        <div class="page-eyebrow">Tableau de bord</div>
+        <div class="page-title" style="margin-bottom:0">Suivi des <span>interventions</span></div>
+      </div>
+      <button class="btn-add" onclick="openAddHome()" style="margin-top:8px">＋ Nouvelle intervention</button>
+    </div>
+    <div style="height:24px"></div>
     <div class="gstats" id="gstats"></div>
     <!-- Section toutes interventions filtrées -->
     <div id="homeFilter" style="display:none;margin-bottom:28px">
@@ -667,9 +674,9 @@ function init(){
     });
 }
 function rebuildBailSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML=D.bails.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');}
-function updateResSelect(){const bid=document.getElementById('f-bai').value;document.getElementById('f-res').innerHTML=`<option value="">— Aucune —</option>`+getResForBail(bid).map(r=>`<option value="${r.id}">${r.name}${r.adr?' – '+r.adr:''}</option>`).join('');}
+function updateResSelect(){const bid=document.getElementById('f-bai').value;const sorted=[...getResForBail(bid)].sort((a,b)=>a.name.localeCompare(b.name,'fr'));document.getElementById('f-res').innerHTML=`<option value="">— Aucune —</option>`+sorted.map(r=>`<option value="${r.id}">${r.name}${r.adr?' – '+r.adr:''}</option>`).join('');}
 function rebuildBailSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML=D.bails.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');}
-function updateResSelect(){const bid=document.getElementById('f-bai').value;document.getElementById('f-res').innerHTML=`<option value="">— Aucune —</option>`+getResForBail(bid).map(r=>`<option value="${r.id}">${r.name}${r.adr?' – '+r.adr:''}</option>`).join('');}
+function updateResSelect(){const bid=document.getElementById('f-bai').value;const sorted=[...getResForBail(bid)].sort((a,b)=>a.name.localeCompare(b.name,'fr'));document.getElementById('f-res').innerHTML=`<option value="">— Aucune —</option>`+sorted.map(r=>`<option value="${r.id}">${r.name}${r.adr?' – '+r.adr:''}</option>`).join('');}
 function renderHdrStats(){
   const t=D.mis.length,ec=D.mis.filter(m=>m.sta==='ec').length,at=D.mis.filter(m=>m.sta==='at').length,cl=D.mis.filter(m=>m.sta==='te'||m.sta==='fa').length;
   document.getElementById('hs').innerHTML=`
@@ -718,8 +725,24 @@ function renderHome(){
         <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">${cl}</div><div class="bl-s-l">Clôturées</div></div>
       </div>
       <div class="bl-foot">
-        <div class="bl-bar"><div class="bl-bar-f" style="width:${pct}%"></div></div>
-        <div class="bl-pct">${pct}% clôturées</div>
+        <div style="margin-bottom:8px">
+          <div style="display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--bg4);margin-bottom:5px">
+            ${t>0?`<div style="width:${Math.round(bm.filter(m=>m.sta==='at').length/t*100)}%;background:#d97706"></div><div style="width:${Math.round(bm.filter(m=>m.sta==='pl').length/t*100)}%;background:#1d4ed8"></div><div style="width:${Math.round(bm.filter(m=>m.sta==='ec').length/t*100)}%;background:#ea6c0a"></div><div style="width:${Math.round(bm.filter(m=>m.sta==='te').length/t*100)}%;background:#16a34a"></div><div style="width:${Math.round(bm.filter(m=>m.sta==='fa').length/t*100)}%;background:#7c3aed"></div>`:''}
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            ${t>0?[
+              {k:'at',l:'Attente',c:'#d97706'},
+              {k:'pl',l:'Planifié',c:'#1d4ed8'},
+              {k:'ec',l:'En cours',c:'#ea6c0a'},
+              {k:'te',l:'Terminé',c:'#16a34a'},
+              {k:'fa',l:'Facturé',c:'#7c3aed'}
+            ].filter(s=>bm.filter(m=>m.sta===s.k).length>0).map(s=>{
+              const n=bm.filter(m=>m.sta===s.k).length;
+              const p=Math.round(n/t*100);
+              return '<span style="font-size:9px;font-weight:700;color:'+s.c+'">'+s.l+' '+n+' ('+p+'%)</span>';
+            }).join(''):'<span style="font-size:9px;color:var(--tx3)">0% clôturées</span>'}
+          </div>
+        </div>
         <div class="bl-cats">${cats||'<span style="font-size:10px;color:var(--tx3)">Aucune intervention</span>'}</div>
       </div>
     </div>`;
@@ -808,6 +831,20 @@ async function resetResidences(){
 }
 
 function goHome(){D.curBai=null;D.sel=null;D.fc=null;D.fs=null;curRes=null;renderHome();}
+function openAddHome(){
+  // Depuis la home : ouvrir le modal sans bailleur pré-sélectionné
+  // L'utilisateur choisit lui-même dans la liste
+  D.eid=null;
+  document.getElementById('mttl').textContent='Nouvelle intervention';
+  clrForm();
+  rebuildBailSelect('f-bai');
+  // Sélectionner le premier bailleur par défaut
+  if(D.bails.length) document.getElementById('f-bai').value=D.bails[0].id;
+  updateResSelect();
+  document.getElementById('modal').classList.add('open');
+  // Après sauvegarde, naviguer vers le bon bailleur
+  D._fromHome=true;
+}
 
 function goSettings(){
   showPage('pageSettings');document.getElementById('hdrBack').style.display='flex';
@@ -1030,7 +1067,11 @@ async function save(){
   if(pendingAttachments.length && savedId){
     try{ await uploadAttachments(savedId); }catch(e){ console.error('PJ:',e); }
   }
-  closeModal('modal');D.curBai=bai;toast('Intervention enregistrée ✓');
+  closeModal('modal');
+  toast('Intervention enregistrée ✓');
+  // Naviguer vers le bailleur concerné
+  D.curBai=bai;
+  renderBailleur(bai);
 }
 function clearPdf(){document.getElementById('pres').style.display='none';document.getElementById('pfg').innerHTML='';document.getElementById('pfi').value='';}
 function pdrop(e){e.preventDefault();document.getElementById('pdz').classList.remove('dv');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')ppdf(f);}
@@ -1362,6 +1403,20 @@ function xpdf(raw){
   }
 
   // ══════════════════════════════════════════════════
+  // ENRICHISSEMENT BPU
+  // ══════════════════════════════════════════════════
+  if(detectedBail){
+    const bpuFound = lookupBPU(detectedBail.id, t);
+    if(bpuFound && bpuFound.length){
+      const bpuLines = bpuFound.map(f=>f.code+' — '+f.titre).join('\n');
+      if(!ex.des) ex.des = bpuLines;
+      else if(ex.des.length < 40) ex.des = ex.des + '\n\n' + bpuLines;
+      else ex.des = ex.des + '\n\n📋 Codes BPU :\n' + bpuLines;
+      ex._bpu = bpuFound.map(f=>f.code).join(', ');
+    }
+  }
+
+  // ══════════════════════════════════════════════════
   // REMPLIR LES CHAMPS
   // ══════════════════════════════════════════════════
   if(ex.ref) setAf('f-ref', ex.ref);
@@ -1378,7 +1433,7 @@ function xpdf(raw){
   // ══════════════════════════════════════════════════
   // RÉSUMÉ VISUEL
   // ══════════════════════════════════════════════════
-  const lbl={ref:'N° Bon',rec:'Réclamation',dat:'Date',del:'Délai',loc:'Locataire',adr:'Adresse',tel:'Téléphone',dem:'Demandeur',des:'Description',mnt:'Montant HT',_bai:'Bailleur',_res:'Résidence'};
+  const lbl={ref:'N° Bon',rec:'Réclamation',dat:'Date',del:'Délai',loc:'Locataire',adr:'Adresse',tel:'Téléphone',dem:'Demandeur',des:'Description',mnt:'Montant HT',_bai:'Bailleur',_res:'Résidence',_bpu:'Codes BPU'};
   const done = Object.entries(ex).filter(([k,v])=>v&&!k.startsWith('resname'));
   if(done.length){
     document.getElementById('pfg').innerHTML = done.map(([k,v])=>`<div class="pdf-fr"><div class="pdf-fk">${lbl[k]||k}</div><div class="pdf-fv">${String(v).slice(0,70)}</div></div>`).join('');
@@ -1735,6 +1790,47 @@ async function loadAllResAttachments(mis){
 // On surcharge renderResidencesList pour ajouter le lien
 function makeResClickable(resId, name){
   return `<span onclick="openResidence('${resId}')" style="cursor:pointer;color:var(--or);font-weight:700;text-decoration:underline dotted;text-underline-offset:3px" title="Voir la résidence">${name}</span>`;
+}
+
+// ════════════════════════════════════════════════════════
+// LOOKUP BPU — dictionnaire chargé depuis bpu.js
+// ════════════════════════════════════════════════════════
+function lookupBPU(bailId, rawText){
+  if(typeof BPU_DICT === 'undefined') return null;
+  const bName = (getBail(bailId)?.name||'').toLowerCase();
+  let bKey = null;
+  if(bailId==='erilia-avi'||bName.includes('avignon')) bKey='erilia-avi';
+  else if(bailId==='erilia-mrs'||bName.includes('erilia')) bKey='erilia-mrs';
+  else if(bailId==='sfhe'||bName.includes('sfhe')) bKey='sfhe';
+  else if(bailId==='logis-med'||bName.includes('logis')||bName.includes('1001')) bKey='logis-med';
+  else if(bailId==='thm'||bName.includes('thm')||bName.includes('toulon')) bKey='thm';
+  else if(bailId==='3f-sud'||bName.includes('3f')) bKey='3f-sud';
+  if(!bKey) return null;
+  const dict = BPU_DICT[bKey];
+  if(!dict) return null;
+  const patterns = [
+    /PLM\d{3,6}/g,
+    /ENTPL\d{3,6}/g,
+    /GERTRXEQPX\d{4}/g,
+    /PL\d+-[\dA-Z]+/g,
+    /EC-PL-[\dA-Z]{4}/g,
+    /REL-PL-[\dA-Z]{4}/g,
+    /ENTRE\.MENIN\.\d{2}/g,
+  ];
+  const found = [];
+  const seen = new Set();
+  for(const pat of patterns){
+    pat.lastIndex=0;
+    let m;
+    while((m=pat.exec(rawText))!==null){
+      const code=m[0];
+      if(!seen.has(code)&&dict[code]){
+        seen.add(code);
+        found.push({code, titre:dict[code]});
+      }
+    }
+  }
+  return found.length ? found : null;
 }
 
 init();
