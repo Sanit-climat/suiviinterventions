@@ -972,115 +972,336 @@ async function ppdf(file){
 }
 function setAf(id,v){if(!v)return;const e=document.getElementById(id);if(e&&!e.value){e.value=v;e.classList.add('af');}}
 function xpdf(raw){
-  const t=raw.replace(/\s+/g,' ').trim();
-  const tl=t.toLowerCase();
-  const ex={};let m;
+  const t = raw.replace(/\s+/g,' ').trim();
+  const tl = t.toLowerCase();
+  const ex = {};
+  let m;
 
-  // ── Détection du format ──────────────────────────────────────
-  const isVilogia = tl.includes('vilogia') || tl.includes('bon de commande');
-  const isErilia  = tl.includes('erilia');
+  // ══════════════════════════════════════════════════
+  // DÉTECTION DU FORMAT (bailleur)
+  // ══════════════════════════════════════════════════
+  const isSFHE      = tl.includes('sfhe') || tl.includes('sfhe nimes') || tl.includes('sfhe nîmes');
+  const isLogis1001 = tl.includes('1001 vies') || tl.includes('1001vies') || tl.includes('cger');
+  const isTHM       = tl.includes('toulon habitat') || tl.includes('toulon méditerranée') || tl.includes('bon de travail') || tl.includes('walz') || (tl.includes('thm') && !tl.includes('sfhe'));
+  const is3F        = tl.includes('3f sud') || tl.includes('groupe3f') || tl.includes('bp051');
+  const isVilogia   = tl.includes('vilogia');
+  const isEriliaAvi = tl.includes('erilia') && tl.includes('avignon');
+  const isEriliaMrs = tl.includes('erilia') && (tl.includes('marseille') || tl.includes('aubagne') || tl.includes('ciotat'));
+  const isErilia    = tl.includes('erilia') && !isEriliaAvi && !isEriliaMrs;
 
-  // ── N° BON ───────────────────────────────────────────────────
-  // Vilogia : "Bon de commande n° : LOG/N38708"
-  m=t.match(/[Bb]on\s+de\s+commande\s+n°\s*:?\s*([\w\/\-]+)/i);
-  if(m)ex.ref=m[1].trim();
-  // Erilia : "N° 2026 40576"
-  if(!ex.ref){m=t.match(/N°\s*(\d{4}\s*\d{4,6})/);if(m)ex.ref=m[1].replace(/\s/g,'');}
+  // ══════════════════════════════════════════════════
+  // N° BON DE COMMANDE / TRAVAUX
+  // ══════════════════════════════════════════════════
+  if(isSFHE){
+    // "N° : 265316"
+    m = t.match(/N°\s*:\s*(\d{4,8})/);
+    if(m) ex.ref = m[1];
+    // "Dev26-13227" → N° réclamation
+    m = t.match(/(Dev\d{2}-\d+)/i);
+    if(m) ex.rec = m[1];
 
-  // ── N° RECLAMATION / DEVIS ───────────────────────────────────
-  // Vilogia : "Demande de devis n°DEV26-13150"
-  m=t.match(/[Dd]emande\s+de\s+devis\s+n°([\w\-]+)/i);
-  if(m)ex.rec=m[1].trim();
-  // Erilia : "Récl. Tech. n° 2026/33459"
-  if(!ex.rec){m=t.match(/R[eé]cl(?:amation)?\.?\s*(?:Tech\.?)?\s*n°?\s*([\d\/\s]+?)(?=\s[A-Z\n]|$)/i);if(m)ex.rec=m[1].trim().replace(/\s/g,'');}
+  } else if(isLogis1001){
+    // "n° CGER 309029"
+    m = t.match(/n°\s*(CGER\s*\d+)/i);
+    if(m) ex.ref = m[1].replace(/\s/g,'');
+    else { m = t.match(/CGER\s*(\d+)/i); if(m) ex.ref = 'CGER'+m[1]; }
 
-  // ── DATE ─────────────────────────────────────────────────────
-  // Vilogia : "du : 27/03/2026"
-  m=t.match(/du\s*:\s*(\d{2}\/\d{2}\/\d{4})/i);
-  if(m){const p=m[1].split('/');ex.dat=`${p[2]}-${p[1]}-${p[0]}`;}
-  // Vilogia : "Travaux à réaliser pour le 27/03/2026"
-  if(!ex.dat){m=t.match(/pour\s+le\s+(\d{2}\/\d{2}\/\d{4})/i);if(m){const p=m[1].split('/');ex.dat=`${p[2]}-${p[1]}-${p[0]}`;}}
-  // Erilia : "Édité le 23-03-2026"
-  if(!ex.dat){m=t.match(/[EÉ]dit[eé]\s*le\s*(\d{2}-\d{2}-\d{4})/i);if(m){const p=m[1].split('-');ex.dat=`${p[2]}-${p[1]}-${p[0]}`;}}
+  } else if(isTHM){
+    // "BON DE TRAVAIL N° 26033139"
+    m = t.match(/BON\s*DE\s*TRAVAIL\s*N°\s*(\d+)/i);
+    if(m) ex.ref = m[1];
+    // Réclamation date
+    m = t.match(/R[eé]clamation\s+(\d{2}\.\d{2}\.\d{4})/i);
+    if(m) ex.rec = m[1];
 
-  // ── DÉLAI ────────────────────────────────────────────────────
-  m=t.match(/P[EÉ]RIODE\s*DU\s*(\d{2}-\d{2}-\d{4})\s*AU\s*(\d{2}-\d{2}-\d{4})/i);if(m)ex.del=`${m[1]} au ${m[2]}`;
-  if(!ex.del&&isVilogia&&ex.dat){
-    // Vilogia : date = délai dans ce format
-    m=t.match(/[Tt]ravaux\s+[àa]\s+r[eé]aliser\s+pour\s+le\s+(\d{2}\/\d{2}\/\d{4})/i);
-    if(m)ex.del=`Pour le ${m[1]}`;
+  } else if(is3F){
+    // "Bon de commande référence : BP051-7282"
+    m = t.match(/r[eé]f[eé]rence\s*:\s*(BP\d{3}-\d+)/i);
+    if(m) ex.ref = m[1];
+
+  } else if(isVilogia){
+    m = t.match(/[Bb]on\s+de\s+commande\s+n°\s*:?\s*([\w\/\-]+)/i);
+    if(m) ex.ref = m[1].trim();
+    if(!ex.ref){ m = t.match(/N°\s*(\d{4}\s*\d{4,6})/); if(m) ex.ref = m[1].replace(/\s/g,''); }
+
+  } else if(isEriliaAvi || isEriliaMrs || isErilia){
+    m = t.match(/[Bb]on\s+de\s+commande\s+n°\s*:?\s*([\w\/\-]+)/i);
+    if(m) ex.ref = m[1].trim();
+    if(!ex.ref){ m = t.match(/N°\s*(\d{4}\s*\d{4,6})/); if(m) ex.ref = m[1].replace(/\s/g,''); }
+    m = t.match(/R[eé]cl(?:amation)?\.?\s*(?:Tech\.?)?\s*n°?\s*([\d\/\s]+?)(?=\s[A-Z\n]|$)/i);
+    if(m) ex.rec = m[1].trim().replace(/\s/g,'');
+    m = t.match(/[Dd]emande\s+de\s+devis\s+n°([\w\-]+)/i);
+    if(m) ex.rec = m[1].trim();
   }
 
-  // ── DEMANDEUR / ÉMETTEUR ──────────────────────────────────────
-  // Vilogia : "Emetteur : M. Zakaria DIAKHITE"
-  m=t.match(/[EÉ]metteur\s*:\s*([^\n,;]{3,50}?)(?=\s*email|\s*mail|\s*tél|$)/i);
-  if(m)ex.dem=m[1].trim();
-  // Erilia : "SERVICE ÉMETTEUR ..."
-  if(!ex.dem){m=t.match(/SERVICE[S]?\s+[EÉ]METTEUR\s+([A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]{4,60}?)(?=\s*LOCALISATION|\s*\d|\s*$)/i);if(m)ex.dem=m[1].trim().slice(0,60);}
-  if(!ex.dem){m=t.match(/ERILIA\s+(AGENCE\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ]+)/i);if(m)ex.dem='ERILIA '+m[1].trim();}
+  // ══════════════════════════════════════════════════
+  // DATE
+  // ══════════════════════════════════════════════════
+  if(isSFHE){
+    // "Du : 31/03/2026"
+    m = t.match(/Du\s*:\s*(\d{2}\/\d{2}\/\d{4})/i);
+    if(m){ const p=m[1].split('/'); ex.dat=`${p[2]}-${p[1]}-${p[0]}`; }
+    // "Edité le 31/03/2026"
+    if(!ex.dat){ m = t.match(/Edit[eé]\s+le\s+(\d{2}\/\d{2}\/\d{4})/i); if(m){ const p=m[1].split('/'); ex.dat=`${p[2]}-${p[1]}-${p[0]}`; } }
 
-  // ── LOCATAIRE (Erilia) / pas de locataire sur Vilogia parties communes ──
-  if(!isVilogia||!tl.includes('parties communes')){
-    m=t.match(/((?:MME|M\.|MONSIEUR|MADAME)\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ][A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]{2,35}?)\s+\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|R[EÉ]SIDENCE)/i);if(m)ex.loc=m[1].trim();
-    if(!ex.loc){const ns=[...t.matchAll(/(MME|M\.|MONSIEUR|MADAME)\s+([A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ]+\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\-]+)/g)];if(ns.length)ex.loc=ns[ns.length-1][0].trim();}
+  } else if(isLogis1001){
+    // "du 01-04-2026"
+    m = t.match(/du\s+(\d{2}-\d{2}-\d{4})/i);
+    if(m){ const p=m[1].split('-'); ex.dat=`${p[2]}-${p[1]}-${p[0]}`; }
+
+  } else if(isTHM){
+    // "en date du 31.03.2026"
+    m = t.match(/en\s+date\s+du\s+(\d{2}\.\d{2}\.\d{4})/i);
+    if(m){ const p=m[1].split('.'); ex.dat=`${p[2]}-${p[1]}-${p[0]}`; }
+
+  } else if(is3F){
+    // "Le 01/04/2026"
+    m = t.match(/Le\s+(\d{2}\/\d{2}\/\d{4})/i);
+    if(m){ const p=m[1].split('/'); ex.dat=`${p[2]}-${p[1]}-${p[0]}`; }
+
+  } else {
+    m = t.match(/du\s*:\s*(\d{2}\/\d{2}\/\d{4})/i);
+    if(m){ const p=m[1].split('/'); ex.dat=`${p[2]}-${p[1]}-${p[0]}`; }
+    if(!ex.dat){ m = t.match(/[EÉ]dit[eé]\s*le\s*(\d{2}-\d{2}-\d{4})/i); if(m){ const p=m[1].split('-'); ex.dat=`${p[2]}-${p[1]}-${p[0]}`; } }
   }
 
-  // ── ADRESSE D'INTERVENTION ────────────────────────────────────
-  // Vilogia : bloc après "BATIMENT X" → adresse + CP ville
-  if(isVilogia){
-    m=t.match(/BATIMENT\s+\w[\w\s]*?(\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|SAINT|SAINT)[^\d]{3,50}\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,20})/i);
-    if(m)ex.adr=m[1].replace(/\s+/g,' ').trim();
-    // Fallback : cherche une adresse numérotée avec CP 130xx (Marseille) dans le texte
-    if(!ex.adr){m=t.match(/(\d+\s+(?:RUE|AVENUE|AVENUE\s+SAINT|AVENUE\s+DE|BOULEVARD|IMPASSE|CHEMIN|ALL[EÉ]E|PLACE|ROUTE)\s+[^\d]{3,50}1[23]\d{3}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,20})/i);if(m)ex.adr=m[1].replace(/\s+/g,' ').trim();}
+  // ══════════════════════════════════════════════════
+  // DÉLAI
+  // ══════════════════════════════════════════════════
+  if(isSFHE){
+    m = t.match(/TRAVAUX\s*A\s*REALISER\s*ENTRE\s*LE\s*:\s*(\d{2}\/\d{2}\/\d{4})\s*ET\s*LE\s*:\s*(\d{2}\/\d{2}\/\d{4})/i);
+    if(m) ex.del = `${m[1]} au ${m[2]}`;
+  } else if(isTHM){
+    m = t.match(/Du\s*:\s*(\d{2}\.\d{2}\.\d{4})\s*Au\s*:\s*(\d{2}\.\d{2}\.\d{4})/i);
+    if(m) ex.del = `${m[1]} au ${m[2]}`;
+  } else if(is3F){
+    m = t.match(/D[eé]but\s*:\s*(\d{2}\/\d{2}\/\d{4})\s*-\s*Fin\s*:\s*(\d{2}\/\d{2}\/\d{4})/i);
+    if(m) ex.del = `${m[1]} au ${m[2]}`;
+  } else if(isLogis1001){
+    m = t.match(/Livraison\s+du\s*:\s*(\d{2}-\d{2}-\d{4})\s*au\s*(\d{2}-\d{2}-\d{4})/i);
+    if(m) ex.del = `${m[1]} au ${m[2]}`;
+  } else {
+    m = t.match(/P[EÉ]RIODE\s*DU\s*(\d{2}-\d{2}-\d{4})\s*AU\s*(\d{2}-\d{2}-\d{4})/i);
+    if(m) ex.del = `${m[1]} au ${m[2]}`;
   }
-  // Erilia fallbacks
-  if(!ex.adr){m=t.match(/(?:MME|M\.|MONSIEUR|MADAME)\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]+\s+(\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|R[EÉ]SIDENCE)[^T]{5,60}?\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,25}?)(?:T[eé]l|$)/i);if(m)ex.adr=m[1].replace(/\s+/g,' ').trim();}
-  if(!ex.adr){m=t.match(/(\d+\s+(?:IMPASSE|RUE|AVENUE|BOULEVARD|ALL[EÉ]E|CHEMIN|PLACE|R[EÉ]SIDENCE)\s+[^0-9]{4,50}\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,20})/i);if(m)ex.adr=m[1].replace(/\s+/g,' ').trim();}
 
-  // ── TÉLÉPHONE ────────────────────────────────────────────────
-  // Vilogia : "tél : 0660034313"
-  m=t.match(/t[eé]l\s*:?\s*(0[0-9][\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2})/i);
-  if(m)ex.tel=m[1].replace(/[\s\.]/g,'');
-  if(!ex.tel){const mobs=[...t.matchAll(/\b(0[67]\d{2}[\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2})\b/g)];if(mobs.length)ex.tel=mobs[mobs.length-1][1].replace(/[\s\.]/g,'');}
-  if(!ex.tel){const fix=[...t.matchAll(/\b(0[1-5]\d{2}[\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2})\b/g)];if(fix.length)ex.tel=fix[fix.length-1][1].replace(/[\s\.]/g,'');}
-
-  // ── DESCRIPTION ───────────────────────────────────────────────
-  // Vilogia : titre sous "Bon de commande n°" avant le bloc adresse
-  if(isVilogia){
-    m=t.match(/[Bb]on\s+de\s+commande\s+n°\s*:?\s*[\w\/\-]+\s*(?:\(.*?\))?\s*(?:du\s*:\s*[\d\/]+\s*)?([^\d][^€\n]{8,120}?)(?=\s*VILOGIA|\s*Vilogia|\s*\d+[,\s])/i);
-    if(m)ex.des=m[1].trim().replace(/\s+/g,' ');
+  // ══════════════════════════════════════════════════
+  // DEMANDEUR / ÉMETTEUR
+  // ══════════════════════════════════════════════════
+  if(isSFHE){
+    // "ENVOYE PAR : M Yohan CLAY"
+    m = t.match(/ENVOYE\s*PAR\s*:\s*([^\n]{3,50}?)(?=\s*MAIL|\s*TEL|$)/i);
+    if(m) ex.dem = m[1].trim();
+  } else if(isLogis1001){
+    // "Emetteur de la commande : KHAMASSI Yacine"
+    m = t.match(/Emetteur\s+de\s+la\s+commande\s*:\s*([^\-]{3,50}?)(?=\s*-|\s*Interlocuteur|$)/i);
+    if(m) ex.dem = m[1].trim();
+  } else if(isTHM){
+    // "Emetteur : JDIAZ" + "Visa : WALZ" → "Suivi office : DIAZ JEREMY"
+    m = t.match(/Suivi\s+office\s*:\s*([^\n]{3,40}?)(?=\s*Tel|$)/i);
+    if(m) ex.dem = m[1].trim();
+    else { m = t.match(/Emetteur\s*:\s*([^\n]{2,20})/i); if(m) ex.dem = m[1].trim(); }
+  } else if(is3F){
+    // "Emetteur : DIDIER TRIPODI"
+    m = t.match(/Emetteur\s*:\s*([^\n]{3,60}?)(?=\s*Tel|$)/i);
+    if(m) ex.dem = m[1].trim();
+  } else {
+    m = t.match(/[EÉ]metteur\s*:\s*([^\n,;]{3,50}?)(?=\s*email|\s*mail|\s*t[eé]l|$)/i);
+    if(m) ex.dem = m[1].trim();
+    if(!ex.dem){ m = t.match(/SERVICE[S]?\s+[EÉ]METTEUR\s+([A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]{4,60}?)(?=\s*LOCALISATION|\s*\d|\s*$)/i); if(m) ex.dem = m[1].trim().slice(0,60); }
   }
-  // Erilia : colonne DÉSIGNATION du tableau
-  if(!ex.des){m=t.match(/D[EÉ]SIGNATION\s+UNIT[EÉ][\s\S]{0,60}?((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|V[eé]rification|D[eé]bouchage|Nettoyage|Installation|Changement|Trav)[^\d€]{15,250}?)(?:\d|FOR|ENS|TOTAL|H\.T\.)/i);if(m)ex.des=m[1].replace(/\s+/g,' ').trim();}
-  if(!ex.des){m=t.match(/((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|Changement|Trav\.|Installation)\s+[^\d€]{10,200})/i);if(m)ex.des=m[1].replace(/\s+/g,' ').trim();}
 
-  // ── MONTANT HT ───────────────────────────────────────────────
-  m=t.match(/Total\s*HT\s*([\d\s]+[,\.]\d{2})\s*€?/i);
-  if(m)ex.mnt=m[1].replace(/\s/g,'').replace('.',',');
-  if(!ex.mnt){m=t.match(/TOTAL\s*H\.?T\.?\s*([\d\s]+[,\.]\d{2})/i);if(m)ex.mnt=m[1].replace(/\s/g,'').replace('.',',');}
+  // ══════════════════════════════════════════════════
+  // LOCATAIRE
+  // ══════════════════════════════════════════════════
+  if(isSFHE){
+    // "Locataire : M MME IDIR Mohamed (140265)"
+    m = t.match(/Locataire\s*:\s*([^\n]{3,60}?)(?=\s*T[eé]l|\s*Port|\s*$)/i);
+    if(m) ex.loc = m[1].trim().replace(/\(\d+\)/, '').trim();
+  } else if(isLogis1001){
+    // "Référence occupant : THIAM ALICINE"
+    m = t.match(/R[eé]f[eé]rence\s+occupant\s*:\s*([^\-\n]{3,50}?)(?=\s*-|T[eé]l|$)/i);
+    if(m) ex.loc = m[1].trim();
+  } else if(isTHM){
+    // Locataire souvent vide sur les parties communes
+    m = t.match(/Locataire\s*:\s*([^\n]{3,50}?)(?=\s*T[eé]l|$)/i);
+    if(m && m[1].trim().length > 2) ex.loc = m[1].trim();
+  } else if(is3F){
+    // "Locataire : Taoufik LAHDIDIOUI"
+    m = t.match(/Locataire\s*:\s*([^\n]{3,60}?)(?=\s*T[eé]l|\s*$)/i);
+    if(m) ex.loc = m[1].trim();
+  } else {
+    m = t.match(/((?:MME|M\.|MONSIEUR|MADAME)\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ][A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]{2,35}?)\s+\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|R[EÉ]SIDENCE)/i);
+    if(m) ex.loc = m[1].trim();
+    if(!ex.loc){ const ns=[...t.matchAll(/(MME|M\.|MONSIEUR|MADAME)\s+([A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ]+\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\-]+)/g)]; if(ns.length) ex.loc=ns[ns.length-1][0].trim(); }
+  }
 
-  // ── BAILLEUR AUTO-DETECT ──────────────────────────────────────
-  let detectedBail=null;
-  if(tl.includes('vilogia')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('vilogia'));ex._bai=detectedBail?.name;}
-  else if(tl.includes('erilia')&&tl.includes('avignon')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('avignon'));ex._bai=detectedBail?.name;}
-  else if(tl.includes('erilia')&&tl.includes('marseille')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('marseille'));ex._bai=detectedBail?.name;}
-  else if(tl.includes('erilia')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia'));ex._bai=detectedBail?.name;}
-  if(detectedBail){document.getElementById('f-bai').value=detectedBail.id;updateResSelect();}
-  if(detectedBail){const ress=getResForBail(detectedBail.id);const matched=ress.find(r=>tl.includes(r.name.toLowerCase()));if(matched){document.getElementById('f-res').value=matched.id;ex._res=matched.name;}}
+  // ══════════════════════════════════════════════════
+  // TÉLÉPHONE locataire
+  // ══════════════════════════════════════════════════
+  if(isSFHE){
+    // "Port. : 0623521674" (locataire) — prendre le dernier portable du locataire
+    m = t.match(/Locataire.*?Port\.\s*:\s*(0[67]\d{8})/i);
+    if(m) ex.tel = m[1];
+  } else if(isLogis1001){
+    // "Téléphone mobile : 0612948204"
+    m = t.match(/T[eé]l[eé]phone\s+mobile\s*:\s*(0\d{9})/i);
+    if(m) ex.tel = m[1];
+  } else if(is3F){
+    // "Tél port : 0616891741"
+    m = t.match(/T[eé]l\s*port\s*:\s*(0[67]\d{8})/i);
+    if(m) ex.tel = m[1];
+  } else {
+    const mobs=[...t.matchAll(/\b(0[67]\d{2}[\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2})\b/g)];
+    if(mobs.length) ex.tel=mobs[mobs.length-1][1].replace(/[\s\.]/g,'');
+    if(!ex.tel){ const fix=[...t.matchAll(/\b(0[1-5]\d{2}[\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2})\b/g)]; if(fix.length) ex.tel=fix[fix.length-1][1].replace(/[\s\.]/g,''); }
+  }
+
+  // ══════════════════════════════════════════════════
+  // ADRESSE D'INTERVENTION
+  // ══════════════════════════════════════════════════
+  if(isSFHE){
+    // "LE MAS DU DAUPHIN ... 1 Rue Colbert 30129 MANDUEL"
+    m = t.match(/PATRIMOINE\s+CONCERNE\s+[^\n]+\([^)]+\)\s*([^\n]+)\s+(\d{5}\s+[A-Z\s]+?)(?=\s*Logement|\s*Vous)/i);
+    if(m) ex.adr = `${m[1].trim()}, ${m[2].trim()}`;
+    if(!ex.adr){
+      m = t.match(/(\d+\s+Rue\s+[^\n]{3,40}\d{5}\s+[A-Z\s]{2,20})/i);
+      if(m) ex.adr = m[1].replace(/\s+/g,' ').trim();
+    }
+  } else if(isLogis1001){
+    // "16 RUE HOCHE 13003 MARSEILLE 03"
+    m = t.match(/(\d+\s+RUE\s+[^\n]{2,40}\n?\s*\d{5}\s+[A-Z\s]{2,25})/i);
+    if(m) ex.adr = m[1].replace(/\s+/g,' ').trim();
+    // Résidence aussi utile
+    m = t.match(/R[eé]sidence\s*:\s*\d+-([^\n]{3,50})/i);
+    if(m) ex.resname_hint = m[1].trim();
+  } else if(isTHM){
+    // "LE VERONESE ... 83200 TOULON OUEST"
+    m = t.match(/Lieu\s+d.ex[eé]cution\s*:\s*([^\n]{3,60})\s*\n?\s*[^\n]*\n?\s*(\d{5}\s+[A-Z\s]{2,25})/i);
+    if(m) ex.adr = `${m[1].trim()}, ${m[2].trim()}`;
+  } else if(is3F){
+    // "894 route NATIONALE 8 13400 AUBAGNE"
+    m = t.match(/(\d+\s+(?:route|rue|avenue|boulevard|chemin|impasse|allée)\s+[^\n]{2,40}\s*\n?\s*\d{5}\s+[A-Z\s]{2,25})/i);
+    if(m) ex.adr = m[1].replace(/\s+/g,' ').trim();
+  } else {
+    m = t.match(/(?:MME|M\.|MONSIEUR|MADAME)\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]+\s+(\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|R[EÉ]SIDENCE)[^T]{5,60}?\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,25}?)(?:T[eé]l|$)/i);
+    if(m) ex.adr = m[1].replace(/\s+/g,' ').trim();
+    if(!ex.adr){ m = t.match(/(\d+\s+(?:IMPASSE|RUE|AVENUE|BOULEVARD|ALL[EÉ]E|CHEMIN|PLACE|R[EÉ]SIDENCE)\s+[^0-9]{4,50}\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,20})/i); if(m) ex.adr=m[1].replace(/\s+/g,' ').trim(); }
+    if(!ex.adr && isTHM){ m = t.match(/BATIMENT\s+\w[\w\s]*?(\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|SAINT)[^\d]{3,50}\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,20})/i); if(m) ex.adr=m[1].replace(/\s+/g,' ').trim(); }
+  }
+
+  // ══════════════════════════════════════════════════
+  // DESCRIPTION DES TRAVAUX
+  // ══════════════════════════════════════════════════
+  if(isSFHE){
+    // Titre du bon : "HP358 Dev26-13227 refixer rad + raccord"
+    m = t.match(/BON\s+DE\s+COMMANDE\s+([^\n]{5,100}?)\s*N°/i);
+    if(m) ex.des = m[1].trim();
+  } else if(isLogis1001){
+    // "Objet de la commande : PPR VERIF LAVABO THIAM ADAMAS"
+    m = t.match(/Objet\s+de\s+la\s+commande\s*:\s*([^\n]{5,150})/i);
+    if(m) ex.des = m[1].trim();
+    if(!ex.des){
+      // Dans le tableau désignation
+      m = t.match(/FRAIS\s+DEPLACEMENT[^\n]*\n\s*([^\n]{5,100})/i);
+      if(m) ex.des = m[1].trim();
+    }
+  } else if(isTHM){
+    // Ligne en majuscules après le tableau
+    m = t.match(/FUITE\s+SUR[^\n]{5,200}/i) || t.match(/([A-Z]{3}[A-Z\s]{10,120}(?:FUITE|REMPLACEMENT|RÉPARATION|REPARATION|PANNE|BOUCHON|DÉPANNAGE|DEPANNAGE|ENTRETIEN)[A-Z\s]{5,100})/);
+    if(m) ex.des = m[0].trim();
+    // Sinon : nature des travaux
+    if(!ex.des){ m = t.match(/nature\s+des\s+travaux\s+[^\n]*\n\s*([^\n]{5,100})/i); if(m) ex.des = m[1].trim(); }
+  } else if(is3F){
+    // "Description ... Remplacement vitrage"
+    m = t.match(/Description\s+([^\n]{5,150})/i);
+    if(m) ex.des = m[1].trim();
+  } else {
+    m = t.match(/D[EÉ]SIGNATION\s+UNIT[EÉ][\s\S]{0,60}?((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|V[eé]rification|D[eé]bouchage|Nettoyage|Installation|Changement)[^\d€]{15,250}?)(?:\d|FOR|ENS|TOTAL|H\.T\.)/i);
+    if(m) ex.des=m[1].replace(/\s+/g,' ').trim();
+    if(!ex.des){ m = t.match(/((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|Changement|Trav\.|Installation)\s+[^\d€]{10,200})/i); if(m) ex.des=m[1].replace(/\s+/g,' ').trim(); }
+  }
+
+  // ══════════════════════════════════════════════════
+  // MONTANT HT
+  // ══════════════════════════════════════════════════
+  m = t.match(/TOTAL\s*HT\s*([\d\s]+[,\.]\d{2})\s*€?/i);
+  if(m) ex.mnt = m[1].replace(/\s/g,'').replace('.',',');
+  if(!ex.mnt){ m = t.match(/Montant\s+(?:total\s+)?HT\s*[\(\euros\)]*\s*([\d\s]+[,\.]\d{2})/i); if(m) ex.mnt=m[1].replace(/\s/g,'').replace('.',','); }
+  if(!ex.mnt){ m = t.match(/total\s*h\.?t\.?\s*([\d\s]+[,\.]\d{2})/i); if(m) ex.mnt=m[1].replace(/\s/g,'').replace('.',','); }
+
+  // ══════════════════════════════════════════════════
+  // AUTO-DETECT BAILLEUR → sélectionner dans la liste
+  // ══════════════════════════════════════════════════
+  let detectedBail = null;
+  if(isSFHE)          { detectedBail = D.bails.find(b=>b.name.toLowerCase().includes('sfhe')); ex._bai = detectedBail?.name; }
+  else if(isLogis1001){ detectedBail = D.bails.find(b=>b.name.toLowerCase().includes('logis') || b.name.toLowerCase().includes('1001')); ex._bai = detectedBail?.name; }
+  else if(isTHM)      { detectedBail = D.bails.find(b=>b.name.toLowerCase().includes('thm') || b.name.toLowerCase().includes('toulon')); ex._bai = detectedBail?.name; }
+  else if(is3F)       { detectedBail = D.bails.find(b=>b.name.toLowerCase().includes('3f')); ex._bai = detectedBail?.name; }
+  else if(isVilogia)  { detectedBail = D.bails.find(b=>b.name.toLowerCase().includes('vilogia')); ex._bai = detectedBail?.name; }
+  else if(isEriliaAvi){ detectedBail = D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('avignon')); ex._bai = detectedBail?.name; }
+  else if(isEriliaMrs || isErilia){ detectedBail = D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('marseille')); if(!detectedBail) detectedBail = D.bails.find(b=>b.name.toLowerCase().includes('erilia')); ex._bai = detectedBail?.name; }
+
+  if(detectedBail){
+    document.getElementById('f-bai').value = detectedBail.id;
+    updateResSelect();
+    // Auto-match résidence
+    const ress = getResForBail(detectedBail.id);
+    const matched = ress.find(r=>tl.includes(r.name.toLowerCase()));
+    if(matched){ document.getElementById('f-res').value = matched.id; ex._res = matched.name; }
+    // Hint résidence depuis 1001 Vies
+    if(ex.resname_hint && !matched){
+      const h = ex.resname_hint.toLowerCase();
+      const hinted = ress.find(r=>h.includes(r.name.toLowerCase().slice(0,6)) || r.name.toLowerCase().includes(h.slice(0,6)));
+      if(hinted){ document.getElementById('f-res').value = hinted.id; ex._res = hinted.name; }
+    }
+  }
+
+  // ══════════════════════════════════════════════════
+  // AUTO-DETECT CATÉGORIE
+  // ══════════════════════════════════════════════════
   if(!document.getElementById('f-cat').value){
-    if(tl.match(/plomb|ballo|ecs|cumulus|robinet|canalisation|wc|toil|tuyau|chauffe|sanitaire/))document.getElementById('f-cat').value='Plomberie';
-    else if(tl.match(/maçon|b[eé]ton|fissure|[eé]tanch|toiture|infiltr/))document.getElementById('f-cat').value='Maçonnerie / Étanchéité';
-    else if(tl.match(/peinture|repeindre|vernis/))document.getElementById('f-cat').value='Peinture';
-    else if(tl.match(/porte|fen[eê]tre|serrure|volet|menuiserie|cylindre|stop.park|m[eé]tallerie|serrurerie/))document.getElementById('f-cat').value='Menuiserie';
+    if(tl.match(/plomb|ballo|ecs|cumulus|robinet|canalisation|wc|toil|tuyau|chauffe|sanitaire|rad|raccord|fuite|lavabo/))
+      document.getElementById('f-cat').value='Plomberie';
+    else if(tl.match(/maçon|b[eé]ton|fissure|[eé]tanch|toiture|infiltr/))
+      document.getElementById('f-cat').value='Maçonnerie / Étanchéité';
+    else if(tl.match(/peinture|repeindre|vernis/))
+      document.getElementById('f-cat').value='Peinture';
+    else if(tl.match(/porte|fen[eê]tre|serrure|volet|menuiserie|cylindre|vitrage|vitre|m[eé]tallerie/))
+      document.getElementById('f-cat').value='Menuiserie';
+    else if(tl.match(/électr|tableau|prises|disjoncteur/))
+      document.getElementById('f-cat').value='TCE';
   }
-  if(ex.ref)setAf('f-ref',ex.ref);if(ex.rec)setAf('f-rec',ex.rec);
-  if(ex.dat){const e=document.getElementById('f-dat');if(e)e.value=ex.dat;}
-  if(ex.del)setAf('f-del',ex.del);if(ex.loc)setAf('f-loc',ex.loc);if(ex.adr)setAf('f-adr',ex.adr);
-  if(ex.tel)setAf('f-tel',ex.tel);if(ex.dem)setAf('f-dem',ex.dem);if(ex.des)setAf('f-des',ex.des);if(ex.mnt)setAf('f-mnt',ex.mnt);
+
+  // ══════════════════════════════════════════════════
+  // REMPLIR LES CHAMPS
+  // ══════════════════════════════════════════════════
+  if(ex.ref) setAf('f-ref', ex.ref);
+  if(ex.rec) setAf('f-rec', ex.rec);
+  if(ex.dat){ const e=document.getElementById('f-dat'); if(e) e.value=ex.dat; }
+  if(ex.del) setAf('f-del', ex.del);
+  if(ex.loc) setAf('f-loc', ex.loc);
+  if(ex.adr) setAf('f-adr', ex.adr);
+  if(ex.tel) setAf('f-tel', ex.tel);
+  if(ex.dem) setAf('f-dem', ex.dem);
+  if(ex.des) setAf('f-des', ex.des);
+  if(ex.mnt) setAf('f-mnt', ex.mnt);
+
+  // ══════════════════════════════════════════════════
+  // RÉSUMÉ VISUEL
+  // ══════════════════════════════════════════════════
   const lbl={ref:'N° Bon',rec:'Réclamation',dat:'Date',del:'Délai',loc:'Locataire',adr:'Adresse',tel:'Téléphone',dem:'Demandeur',des:'Description',mnt:'Montant HT',_bai:'Bailleur',_res:'Résidence'};
-  const done=Object.entries(ex).filter(([,v])=>v);
-  if(done.length){document.getElementById('pfg').innerHTML=done.map(([k,v])=>`<div class="pdf-fr"><div class="pdf-fk">${lbl[k]||k}</div><div class="pdf-fv">${String(v).slice(0,70)}</div></div>`).join('');document.getElementById('pokl').textContent=`✅ ${done.length} champ${done.length>1?'s':''} extrait${done.length>1?'s':''}`;document.getElementById('pres').style.display='block';toast(`📄 ${done.length} champ${done.length>1?'s':''} extrait${done.length>1?'s':''}`);}
-  else toast('⚠️ Aucune donnée reconnue');
+  const done = Object.entries(ex).filter(([k,v])=>v&&!k.startsWith('resname'));
+  if(done.length){
+    document.getElementById('pfg').innerHTML = done.map(([k,v])=>`<div class="pdf-fr"><div class="pdf-fk">${lbl[k]||k}</div><div class="pdf-fv">${String(v).slice(0,70)}</div></div>`).join('');
+    document.getElementById('pokl').textContent = `✅ ${done.length} champ${done.length>1?'s':''} extrait${done.length>1?'s':''}`;
+    document.getElementById('pres').style.display = 'block';
+    toast(`📄 ${done.length} champ${done.length>1?'s':''} extrait${done.length>1?'s':''}`);
+  } else {
+    toast('⚠️ Aucune donnée reconnue');
+  }
 }
+
+
 init();
 </script></body></html>
