@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InterTrack</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:   #f0f4ff;
+  --bg2:  #ffffff;
+  --bg3:  #e8effe;
+  --bg4:  #d0daff;
+  --brd:  #c8d5f0;
+  --brd2: #a0b4e0;
+  --tx:   #0f1e45;
+  --tx2:  #3a5a90;
+  --tx3:  #7a96c0;
+  --or:   #f97316;
+  --or2:  #fb923c;
+  --orbg: rgba(249,115,22,.1);
+  --orbrd:rgba(249,115,22,.4);
+  --gn:   #16a34a; --gnbg: rgba(22,163,74,.1); --gnbrd:rgba(22,163,74,.3);
+  --bl:   #1d4ed8; --blbg: rgba(29,78,216,.1);  --blbrd:rgba(29,78,216,.3);
+  --yw:   #d97706; --ywbg: rgba(217,119,6,.1);
+  --rd:   #dc2626; --rdbg: rgba(220,38,38,.08); --rdbrd:rgba(220,38,38,.3);
+  --pu:   #7c3aed; --pubg: rgba(124,58,237,.1);
+  --r:8px; --rl:12px; --rxl:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-color:var(--bg4) var(--bg3);scrollbar-width:thin}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;min-height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg3)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* HEADER */
+.hdr{background:#fff;border-bottom:3px solid var(--or);padding:0 24px;display:flex;align-items:center;height:58px;gap:14px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(29,78,216,.08)}
+.hdr-logo{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;color:var(--tx)}
+.hdr-logo-badge{background:var(--or);color:#fff;font-size:12px;font-weight:800;padding:4px 9px;border-radius:6px}
+.hdr-sep{width:1px;height:26px;background:var(--brd)}
+.hdr-sub{font-size:12px;color:var(--tx3);font-weight:600}
+.hdr-sp{flex:1}
+.hdr-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif}
+.hdr-btn:hover{border-color:var(--or);color:var(--or);background:var(--orbg)}
+.hdr-stats{display:flex;gap:4px}
+.hdr-stat{padding:6px 13px;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);text-align:center}
+.hdr-stat-n{font-size:18px;font-weight:800;line-height:1;color:var(--tx)}
+.hdr-stat-l{font-size:9px;color:var(--tx3);margin-top:2px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+
+/* PAGES */
+.page{display:none}.page.active{display:block}
+
+/* HOME */
+.home{padding:28px;max-width:1400px;margin:0 auto}
+.page-eyebrow{font-size:11px;font-weight:700;color:var(--or);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.page-title{font-size:28px;font-weight:800;color:var(--tx);margin-bottom:24px;line-height:1.2}
+.page-title span{color:var(--or)}
+
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:30px}
+.gstat{background:#fff;border:1px solid var(--brd);border-left:4px solid var(--gc,var(--or));border-radius:var(--rl);padding:16px 18px;box-shadow:0 2px 8px rgba(29,78,216,.06)}
+.gstat-n{font-size:36px;font-weight:800;line-height:1;color:var(--gc,var(--or))}
+.gstat-l{font-size:11px;color:var(--tx3);margin-top:5px;font-weight:600}
+
+.sec-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sec-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--tx3)}
+.sec-label::before{content:'';display:block;width:18px;height:3px;background:var(--or);border-radius:2px}
+
+/* Bailleur cards */
+.bl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.bl-card{background:#fff;border:1px solid var(--brd);border-radius:var(--rxl);overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s,box-shadow .2s;position:relative;box-shadow:0 2px 8px rgba(29,78,216,.06)}
+.bl-card:hover{border-color:var(--blc,var(--or));transform:translateY(-2px);box-shadow:0 10px 32px rgba(29,78,216,.15)}
+.bl-card-stripe{height:4px;background:var(--blc,var(--or))}
+.bl-card-head{padding:16px 18px 12px;border-bottom:1px solid var(--brd)}
+.bl-card-name{font-size:16px;font-weight:800;color:var(--tx);margin-bottom:2px}
+.bl-card-res{font-size:11px;color:var(--tx3);font-weight:500}
+.bl-open{position:absolute;top:18px;right:16px;font-size:11px;color:var(--blc,var(--or));font-weight:700}
+.bl-stats{display:flex;border-bottom:1px solid var(--brd)}
+.bl-s{flex:1;padding:11px 8px;text-align:center;border-right:1px solid var(--brd)}
+.bl-s:last-child{border-right:none}
+.bl-s-n{font-size:20px;font-weight:800;line-height:1}
+.bl-s-l{font-size:9px;color:var(--tx3);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.bl-foot{padding:12px 18px}
+.bl-bar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:5px}
+.bl-bar-f{height:100%;border-radius:2px;background:var(--blc,var(--or))}
+.bl-pct{font-size:10px;color:var(--tx3);font-weight:600;margin-bottom:8px}
+.bl-cats{display:flex;gap:4px;flex-wrap:wrap}
+.bl-cat{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px}
+
+/* SETTINGS */
+.settings{padding:28px;max-width:1000px;margin:0 auto}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.scard{background:#fff;border:1px solid var(--brd);border-radius:var(--rxl);overflow:hidden;box-shadow:0 2px 8px rgba(29,78,216,.06)}
+.scard-hdr{padding:14px 18px;border-bottom:2px solid var(--or);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
+.scard-title{font-size:13px;font-weight:700;color:var(--tx)}
+.scard-body{padding:16px 18px}
+.slist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--brd);border-left:3px solid var(--brd2);border-radius:var(--r);margin-bottom:7px;background:var(--bg3);transition:border-left-color .15s}
+.slist-item:hover{border-left-color:var(--or)}
+.slist-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.slist-name{font-size:13px;font-weight:600;color:var(--tx)}
+.slist-sub{font-size:11px;color:var(--tx3);margin-top:1px}
+.slist-actions{display:flex;gap:5px}
+.sbtn{padding:4px 9px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;font-family:'Plus Jakarta Sans',sans-serif}
+.sbtn-e{background:var(--blbg);color:var(--bl);border-color:var(--blbrd)}
+.sbtn-d{background:var(--rdbg);color:var(--rd);border-color:var(--rdbrd)}
+.empty-sl{text-align:center;padding:20px;color:var(--tx3);font-size:13px}
+
+/* BAILLEUR PAGE */
+.bp{padding:24px;max-width:1400px;margin:0 auto}
+.bp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.bp-name{font-size:22px;font-weight:800;color:var(--tx)}
+.bp-count{font-size:13px;color:var(--tx3);font-weight:500;margin-left:8px}
+
+.bp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px}
+.bp-stat{background:#fff;border:1px solid var(--brd);border-top:3px solid transparent;border-radius:var(--rl);padding:12px 14px;cursor:pointer;transition:all .15s;box-shadow:0 1px 4px rgba(29,78,216,.05)}
+.bp-stat:hover{border-color:var(--brd2);background:var(--bg3)}
+.bp-stat.active{border-top-color:var(--sc,var(--or));background:var(--sbg)}
+.bp-stat-n{font-size:26px;font-weight:800;line-height:1}
+.bp-stat-l{font-size:10px;color:var(--tx3);margin-top:4px;font-weight:600}
+
+.bp-cats{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:14px}
+.bp-cat{background:#fff;border:1px solid var(--brd);border-radius:var(--r);padding:10px 8px;text-align:center;box-shadow:0 1px 4px rgba(29,78,216,.04)}
+.bp-cat-n{font-size:20px;font-weight:800}
+.bp-cat-l{font-size:9px;font-weight:700;margin-top:3px}
+
+.bp-charts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.bpc{background:#fff;border:1px solid var(--brd);border-radius:var(--rl);overflow:hidden;box-shadow:0 1px 4px rgba(29,78,216,.04)}
+.bpc-h{padding:10px 14px;border-bottom:2px solid var(--or);font-size:11px;font-weight:700;color:var(--tx2);background:var(--bg3)}
+.bpc-b{padding:14px}
+.bar-row{margin-bottom:9px}
+.bar-top{display:flex;justify-content:space-between;margin-bottom:4px}
+.bar-lbl{font-size:12px;color:var(--tx2);font-weight:500}
+.bar-val{font-size:12px;font-weight:700;color:var(--tx)}
+.bar-tr{height:5px;background:var(--bg4);border-radius:3px}
+.bar-fi{height:5px;border-radius:3px}
+
+.stitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--brd)}
+.stitle-txt{font-size:12px;font-weight:700;color:var(--tx3)}
+.fbadge{background:var(--orbg);color:var(--or);border:1px solid var(--orbrd);font-size:11px;padding:3px 10px;border-radius:20px;cursor:pointer;font-weight:600}
+
+.bpf{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--brd);background:var(--bg3);color:var(--tx2);transition:all .12s}
+.chip:hover{border-color:var(--brd2);color:var(--tx)}
+.chip.pl.on{background:rgba(29,78,216,.1);color:#1d4ed8;border-color:rgba(29,78,216,.35)}
+.chip.ma.on{background:rgba(217,119,6,.1);color:#d97706;border-color:rgba(217,119,6,.35)}
+.chip.pe.on{background:rgba(124,58,237,.1);color:#7c3aed;border-color:rgba(124,58,237,.35)}
+.chip.me.on{background:rgba(22,163,74,.1);color:#16a34a;border-color:rgba(22,163,74,.35)}
+.chip.tc.on{background:rgba(249,115,22,.1);color:#ea6c0a;border-color:rgba(249,115,22,.4)}
+.chip.on{background:var(--orbg);color:var(--or);border-color:var(--orbrd)}
+.srch{padding:7px 12px;border:1px solid var(--brd);border-radius:20px;font-size:12px;background:#fff;color:var(--tx);outline:none;width:200px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500}
+.srch:focus{border-color:var(--or)}
+.srch::placeholder{color:var(--tx3)}
+
+.vbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.vc{display:flex;gap:4px}
+.vb{padding:6px 12px;border:1px solid var(--brd);border-radius:var(--r);background:#fff;color:var(--tx3);font-size:12px;cursor:pointer;font-weight:600;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif}
+.vb:hover{color:var(--tx);border-color:var(--brd2)}
+.vb.on{background:var(--orbg);color:var(--or);border-color:var(--orbrd)}
+
+.mcard{background:#fff;border:1px solid var(--brd);border-left:4px solid var(--brd2);border-radius:var(--rl);margin-bottom:8px;cursor:pointer;transition:all .15s;box-shadow:0 1px 4px rgba(29,78,216,.05)}
+.mcard:hover{border-left-color:var(--or);background:var(--bg3)}
+.mcard.on{border-left-color:var(--or);background:var(--bg3);border-color:var(--or)}
+.mcard-inner{padding:12px 15px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mcard-ref{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx3);margin-bottom:3px}
+.mcard-title{font-size:13px;font-weight:600;color:var(--tx);line-height:1.4;margin-bottom:6px}
+.mcard-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.mcard-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+
+.bdg{display:inline-flex;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700}
+.b-pl{background:rgba(29,78,216,.1);color:#1d4ed8}
+.b-ma{background:rgba(217,119,6,.1);color:#b45309}
+.b-pe{background:rgba(124,58,237,.1);color:#7c3aed}
+.b-me{background:rgba(22,163,74,.1);color:#16a34a}
+.b-tc{background:rgba(249,115,22,.1);color:#ea6c0a}
+.sb{padding:3px 9px;border-radius:5px;font-size:10px;font-weight:700}
+.s-at{background:rgba(217,119,6,.1);color:#d97706}
+.s-pl{background:rgba(29,78,216,.1);color:#1d4ed8}
+.s-ec{background:rgba(249,115,22,.12);color:#ea6c0a}
+.s-te{background:rgba(22,163,74,.1);color:#16a34a}
+.s-fa{background:rgba(124,58,237,.1);color:#7c3aed}
+
+.dw{background:#fff;border:1px solid var(--brd);border-radius:var(--rl);overflow:hidden;margin-bottom:10px;box-shadow:0 1px 4px rgba(29,78,216,.04)}
+.dw-h{padding:10px 15px;border-bottom:2px solid var(--or);font-size:11px;font-weight:700;color:var(--tx2);background:var(--bg3)}
+.dw-b{padding:15px}
+.ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+.il{font-size:10px;color:var(--tx3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.iv{font-size:13px;color:var(--tx);font-weight:500}
+.iv a{color:var(--or);text-decoration:none}
+.iv a:hover{text-decoration:underline}
+.ssel{padding:7px 11px;border:1px solid var(--brd);border-radius:var(--r);font-size:12px;background:var(--bg3);color:var(--tx);cursor:pointer;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600}
+.ssel:focus{border-color:var(--or)}
+.ntxt{width:100%;min-height:72px;padding:9px 12px;border:1px solid var(--brd);border-radius:var(--r);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--tx);background:var(--bg3);resize:vertical;outline:none}
+.ntxt:focus{border-color:var(--or)}
+.bt-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.bt-bt{background:var(--blbg);color:var(--bl);border:1px solid var(--blbrd)}
+.bt-rec{background:var(--orbg);color:var(--or);border:1px solid var(--orbrd)}
+
+.tw{background:#fff;border:1px solid var(--brd);border-radius:var(--rl);overflow:hidden;box-shadow:0 1px 4px rgba(29,78,216,.04)}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--or);background:var(--bg3)}
+.dt td{padding:9px 12px;border-bottom:1px solid var(--brd);color:var(--tx);vertical-align:middle;font-weight:500}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--bg3);cursor:pointer}
+.dt td.mn{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx3)}
+.nr{text-align:center;padding:32px;color:var(--tx3);font-size:13px;font-weight:500}
+
+.btn{padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;border:1px solid;display:inline-flex;align-items:center;gap:5px;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif}
+.btn-g{background:var(--bg3);color:var(--tx2);border-color:var(--brd2)}.btn-g:hover{border-color:var(--or);color:var(--or)}
+.btn-p{background:var(--or);color:#fff;border-color:var(--or);box-shadow:0 2px 12px rgba(249,115,22,.3)}.btn-p:hover{background:#ea6c0a;box-shadow:0 4px 20px rgba(249,115,22,.4)}
+.btn-d{background:var(--rdbg);color:var(--rd);border-color:var(--rdbrd)}
+.btn-add{padding:9px 18px;background:var(--or);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;box-shadow:0 2px 12px rgba(249,115,22,.3)}
+.btn-add:hover{background:#ea6c0a;box-shadow:0 4px 20px rgba(249,115,22,.45)}
+.btn-sm{padding:7px 13px;background:var(--bg3);color:var(--tx2);border:1px solid var(--brd2);border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s}
+.btn-sm:hover{background:var(--orbg);color:var(--or);border-color:var(--orbrd)}
+
+.ov{display:none;position:fixed;inset:0;background:rgba(15,30,69,.55);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.ov.open{display:flex}
+.modal{background:#fff;border:1px solid var(--brd);border-top:3px solid var(--or);border-radius:var(--rxl);width:100%;max-width:660px;max-height:94vh;overflow-y:auto;box-shadow:0 20px 60px rgba(15,30,69,.2)}
+.modal-sm{max-width:420px}
+.mhdr{padding:18px 22px 14px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:10}
+.mttl{font-size:16px;font-weight:800;color:var(--tx)}
+.mcls{background:none;border:none;cursor:pointer;font-size:22px;color:var(--tx3);padding:0 6px;line-height:1;transition:color .12s}
+.mcls:hover{color:var(--or)}
+.mbdy{padding:18px 22px}
+.mft{padding:14px 22px;border-top:1px solid var(--brd);display:flex;justify-content:flex-end;gap:9px;position:sticky;bottom:0;background:#fff}
+.fr{margin-bottom:14px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.fl{font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;display:block}
+.fl span{color:var(--rd)}
+.fi{width:100%;padding:9px 12px;border:1px solid var(--brd);border-radius:var(--r);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--tx);background:var(--bg3);outline:none;transition:border-color .12s;font-weight:500}
+.fi:focus{border-color:var(--or);background:#fff}
+.fi.af{border-color:var(--gn);background:rgba(22,163,74,.05)}
+.fi::placeholder{color:var(--tx3)}
+.fs{width:100%;padding:9px 12px;border:1px solid var(--brd);border-radius:var(--r);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--tx);background:var(--bg3);outline:none;cursor:pointer;transition:border-color .12s}
+.fs:focus{border-color:var(--or)}
+.fta{width:100%;padding:9px 12px;border:1px solid var(--brd);border-radius:var(--r);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--tx);background:var(--bg3);outline:none;min-height:70px;resize:vertical;transition:border-color .12s;font-weight:500}
+.fta:focus{border-color:var(--or);background:#fff}
+.fta.af{border-color:var(--gn);background:rgba(22,163,74,.05)}
+.fta::placeholder,.fi::placeholder{color:var(--tx3)}
+
+.pdf-box{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--rl);padding:14px;margin-bottom:18px}
+.pdf-ttl{font-size:11px;font-weight:700;color:var(--tx3);margin-bottom:10px}
+.pdf-dz{border:2px dashed var(--brd2);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer;transition:all .15s}
+.pdf-dz:hover,.pdf-dz.dv{border-color:var(--or);background:var(--orbg)}
+.pdf-ok{font-size:11px;font-weight:700;color:var(--gn);margin-bottom:7px}
+.pdf-fg{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}
+.pdf-fr{background:#fff;border:1px solid var(--brd);border-radius:var(--r);padding:5px 9px}
+.pdf-fk{font-size:9px;color:var(--tx3);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.pdf-fv{font-size:11px;color:var(--tx);margin-top:2px;font-weight:600}
+
+.cpick{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.cdot{width:26px;height:26px;border-radius:6px;cursor:pointer;transition:transform .1s;border:3px solid transparent}
+.cdot:hover{transform:scale(1.15)}
+.cdot.sel{border-color:var(--tx);box-shadow:0 0 0 2px #fff}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-logo-badge">🏗</div>
+    InterTrack
+  </div>
+  <div class="hdr-sep"></div>
+  <div class="hdr-sub">Gestion des interventions</div>
+  <div class="hdr-sp"></div>
+  <div class="hdr-btn" id="hdrBack" onclick="goHome()" style="display:none">← Accueil</div>
+  <div class="hdr-btn" onclick="goSettings()">⚙ Paramètres</div>
+  <div class="hdr-stats" id="hs"></div>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="pageHome">
+  <div class="home">
+    <div class="page-eyebrow">Tableau de bord</div>
+    <div class="page-title">Suivi des <span>interventions</span></div>
+    <div class="gstats" id="gstats"></div>
+    <div class="sec-bar"><div class="sec-label">Bailleurs</div></div>
+    <div class="bl-grid" id="blGrid"></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="pageSettings">
+  <div class="settings">
+    <div class="page-eyebrow">Configuration</div>
+    <div class="page-title">Paramètres</div>
+    <div class="settings-grid">
+      <div class="scard">
+        <div class="scard-hdr"><div class="scard-title">Bailleurs</div><button class="btn-sm" onclick="openAddBailleur()">+ Nouveau</button></div>
+        <div class="scard-body" id="bailleursList"></div>
+      </div>
+      <div class="scard">
+        <div class="scard-hdr"><div class="scard-title">Résidences</div><button class="btn-sm" onclick="openAddResidence()">+ Nouvelle</button></div>
+        <div class="scard-body">
+          <div style="margin-bottom:12px"><select class="fs" id="resBailFilter" onchange="renderResidencesList()"><option value="">Tous les bailleurs</option></select></div>
+          <div id="residencesList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BAILLEUR PAGE -->
+<div class="page" id="pageBailleur">
+  <div class="bp">
+    <div class="bp-hdr">
+      <div><span class="bp-name" id="bpName"></span><span class="bp-count" id="bpCount"></span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="goSettings()">🏘 Résidences</button>
+        <button class="btn-add" onclick="openAdd()">＋ Nouvelle intervention</button>
+      </div>
+    </div>
+    <div class="bp-stats" id="bpStats"></div>
+    <div class="bp-cats" id="bpCats"></div>
+    <div class="bp-charts" id="bpCharts"></div>
+    <div class="stitle">
+      <span class="stitle-txt" id="listTitle">Toutes les interventions</span>
+      <span id="filterBadge" style="display:none" class="fbadge" onclick="clearSF()">× Effacer le filtre</span>
+    </div>
+    <div class="vbar">
+      <div class="bpf" id="bpFilters"></div>
+      <div class="vc">
+        <button class="vb on" id="vbl" onclick="sv('l')">☰ Liste</button>
+        <button class="vb" id="vbt" onclick="sv('t')">⊞ Tableau</button>
+      </div>
+    </div>
+    <div id="vl"></div>
+    <div id="vt" style="display:none"></div>
+    <div id="detPanel" style="display:none;margin-top:20px;border-top:2px solid var(--or);padding-top:20px"></div>
+  </div>
+</div>
+
+<!-- MODAL INTERVENTION -->
+<div class="ov" id="modal">
+  <div class="modal">
+    <div class="mhdr"><div class="mttl" id="mttl">Nouvelle intervention</div><button class="mcls" onclick="closeModal('modal')">×</button></div>
+    <div class="mbdy">
+      <div class="pdf-box">
+        <div class="pdf-ttl">📄 Import depuis un bon de travaux PDF</div>
+        <div class="pdf-dz" id="pdz" onclick="document.getElementById('pfi').click()" ondragover="event.preventDefault();this.classList.add('dv')" ondragleave="this.classList.remove('dv')" ondrop="pdrop(event)">
+          <div style="font-size:24px;margin-bottom:7px">📋</div>
+          <div style="font-size:13px;font-weight:600;color:var(--tx2)">Déposer le PDF ici ou cliquer pour parcourir</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:2px">Erilia, Vilogia, ou tout autre bon de travaux</div>
+        </div>
+        <input type="file" id="pfi" accept=".pdf" style="display:none" onchange="pfile(event)">
+        <div id="pload" style="display:none;text-align:center;padding:12px;color:var(--tx3);font-size:13px;font-weight:500">⏳ Lecture du PDF...</div>
+        <div id="pres" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 6px">
+            <div class="pdf-ok" id="pokl"></div>
+            <button class="btn btn-g" style="padding:3px 8px;font-size:11px" onclick="clearPdf()">Effacer</button>
+          </div>
+          <div class="pdf-fg" id="pfg"></div>
+        </div>
+      </div>
+      <div class="fr3">
+        <div><label class="fl">N° Bon travaux</label><input class="fi" id="f-ref" placeholder="2026 40576"></div>
+        <div><label class="fl">N° Réclamation</label><input class="fi" id="f-rec" placeholder="2026/33459"></div>
+        <div><label class="fl">Date <span>*</span></label><input class="fi" id="f-dat" type="date"></div>
+      </div>
+      <div class="fr2">
+        <div><label class="fl">Bailleur <span>*</span></label><select class="fs" id="f-bai" onchange="updateResSelect()"></select></div>
+        <div><label class="fl">Résidence</label><select class="fs" id="f-res"><option value="">— Aucune —</option></select></div>
+      </div>
+      <div class="fr2">
+        <div><label class="fl">Catégorie <span>*</span></label>
+          <select class="fs" id="f-cat">
+            <option value="">— Choisir —</option>
+            <option>Plomberie</option><option>Maçonnerie / Étanchéité</option>
+            <option>Peinture</option><option>Menuiserie</option><option>TCE</option>
+          </select>
+        </div>
+        <div><label class="fl">Statut</label>
+          <select class="fs" id="f-sta">
+            <option value="at">En attente</option><option value="pl">Planifié</option>
+            <option value="ec">En cours</option><option value="te">Terminé</option><option value="fa">Facturé</option>
+          </select>
+        </div>
+      </div>
+      <div class="fr"><label class="fl">Description des travaux <span>*</span></label><textarea class="fta" id="f-des" rows="3" placeholder="Ex : Fourniture et pose d'un ballon ECS 150L..."></textarea></div>
+      <div class="fr2">
+        <div><label class="fl">Demandeur / Service</label><input class="fi" id="f-dem" placeholder="Erilia Agence Avignon"></div>
+        <div><label class="fl">Locataire</label><input class="fi" id="f-loc" placeholder="Mme Dupont Marie"></div>
+      </div>
+      <div class="fr2">
+        <div><label class="fl">Téléphone</label><input class="fi" id="f-tel" placeholder="06 00 00 00 00"></div>
+        <div><label class="fl">Délai / Période</label><input class="fi" id="f-del" placeholder="23-03-2026 au 26-03-2026"></div>
+      </div>
+      <div class="fr"><label class="fl">Adresse d'intervention <span>*</span></label><input class="fi" id="f-adr" placeholder="4 Impasse des Loisirs, 84000 Avignon"></div>
+      <div class="fr2"><div><label class="fl">Montant HT (€)</label><input class="fi" id="f-mnt" placeholder="570,00"></div></div>
+      <div class="fr"><label class="fl">Notes internes</label><textarea class="fta" id="f-not" rows="2" placeholder="Matériaux, accès, observations..."></textarea></div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-g" onclick="closeModal('modal')">Annuler</button>
+      <button class="btn btn-p" onclick="save()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BAILLEUR -->
+<div class="ov" id="modalBailleur">
+  <div class="modal modal-sm">
+    <div class="mhdr"><div class="mttl" id="mBailTtl">Nouveau bailleur</div><button class="mcls" onclick="closeModal('modalBailleur')">×</button></div>
+    <div class="mbdy">
+      <div class="fr"><label class="fl">Nom <span>*</span></label><input class="fi" id="mb-name" placeholder="Ex : Paris Habitat"></div>
+      <div class="fr"><label class="fl">Couleur</label><div class="cpick" id="colorPicker"></div></div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-g" onclick="closeModal('modalBailleur')">Annuler</button>
+      <button class="btn btn-p" onclick="saveBailleur()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESIDENCE -->
+<div class="ov" id="modalResidence">
+  <div class="modal modal-sm">
+    <div class="mhdr"><div class="mttl" id="mResTtl">Nouvelle résidence</div><button class="mcls" onclick="closeModal('modalResidence')">×</button></div>
+    <div class="mbdy">
+      <div class="fr"><label class="fl">Bailleur <span>*</span></label><select class="fs" id="mr-bai"></select></div>
+      <div class="fr"><label class="fl">Nom <span>*</span></label><input class="fi" id="mr-name" placeholder="Ex : Les Oliviers"></div>
+      <div class="fr"><label class="fl">Adresse</label><input class="fi" id="mr-adr" placeholder="12 Rue des Pins, 13000 Marseille"></div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-g" onclick="closeModal('modalResidence')">Annuler</button>
+      <button class="btn btn-p" onclick="saveResidence()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const CA=['Plomberie','Maçonnerie / Étanchéité','Peinture','Menuiserie','TCE'];
+const CK={'Plomberie':'pl','Maçonnerie / Étanchéité':'ma','Peinture':'pe','Menuiserie':'me','TCE':'tc'};
+const CLC={pl:{bg:'rgba(29,78,216,.1)',c:'#1d4ed8'},ma:{bg:'rgba(217,119,6,.1)',c:'#b45309'},pe:{bg:'rgba(124,58,237,.1)',c:'#7c3aed'},me:{bg:'rgba(22,163,74,.1)',c:'#16a34a'},tc:{bg:'rgba(249,115,22,.1)',c:'#ea6c0a'}};
+const ST=[{k:'at',l:'En attente',sc:'#d97706',sbg:'rgba(217,119,6,.08)'},{k:'pl',l:'Planifié',sc:'#1d4ed8',sbg:'rgba(29,78,216,.08)'},{k:'ec',l:'En cours',sc:'#ea6c0a',sbg:'rgba(249,115,22,.08)'},{k:'te',l:'Terminé',sc:'#16a34a',sbg:'rgba(22,163,74,.08)'},{k:'fa',l:'Facturé',sc:'#7c3aed',sbg:'rgba(124,58,237,.08)'}];
+const SC={at:'s-at',pl:'s-pl',ec:'s-ec',te:'s-te',fa:'s-fa'};
+const COLORS=['#f97316','#fb923c','#1d4ed8','#0ea5e9','#60a5fa','#3b82f6','#f59e0b','#fbbf24','#38bdf8','#7dd3fc'];
+const DEFAULT_BAILLEURS=[{id:'vilogia',name:'Vilogia',color:'#3b82f6'},{id:'erilia-mrs',name:'Erilia Marseille',color:'#0ea5e9'},{id:'erilia-avi',name:'Erilia Avignon',color:'#f97316'},{id:'agence',name:'Agence Immo',color:'#60a5fa'},{id:'part',name:'Particuliers',color:'#fb923c'}];
+const DEFAULT_RESIDENCES=[
+  {id:'r001',bai:'erilia-mrs',name:'Air Bel',adr:'13013 Marseille'},{id:'r002',bai:'erilia-mrs',name:'La Corniche',adr:'Marseille'},{id:'r003',bai:'erilia-mrs',name:'Les Figuiers',adr:'Marseille'},{id:'r004',bai:'erilia-mrs',name:'Résidence du Port',adr:'Marseille'},{id:'r005',bai:'erilia-mrs',name:'Les Oliviers',adr:'Marseille'},
+  {id:'r010',bai:'erilia-avi',name:"L'Émeraude",adr:'84000 Avignon'},{id:'r011',bai:'erilia-avi',name:'Les Lavandes',adr:'84000 Avignon'},{id:'r012',bai:'erilia-avi',name:'Les Platanes',adr:'84000 Avignon'},{id:'r013',bai:'erilia-avi',name:'Résidence Mistral',adr:'84000 Avignon'},{id:'r014',bai:'erilia-avi',name:'Les Pins',adr:'84000 Avignon'}
+];
+let D={mis:[],bails:[],res:[],curBai:null,sel:null,fc:null,fs:null,eid:null,ebid:null,erid:null,view:'l'};
+const SK='intertrack_v8';
+function ld(){try{const r=localStorage.getItem(SK);if(r){const p=JSON.parse(r);D.mis=p.mis||[];D.bails=p.bails||[...DEFAULT_BAILLEURS];D.res=p.res||[...DEFAULT_RESIDENCES];}else{D.mis=[];D.bails=[...DEFAULT_BAILLEURS];D.res=[...DEFAULT_RESIDENCES];}}catch(e){D.mis=[];D.bails=[...DEFAULT_BAILLEURS];D.res=[...DEFAULT_RESIDENCES];}}
+function sd(){localStorage.setItem(SK,JSON.stringify({mis:D.mis,bails:D.bails,res:D.res}));try{bc.postMessage('u');}catch(e){}}
+let bc;try{bc=new BroadcastChannel('it8');bc.onmessage=()=>{ld();refreshCurrent();};}catch(e){bc={postMessage:()=>{}};}
+function getBail(id){return D.bails.find(b=>b.id===id);}
+function getResForBail(bid){return D.res.filter(r=>r.bai===bid);}
+function today(){return new Date().toISOString().split('T')[0];}
+function refreshCurrent(){if(D.curBai)renderBailleur(D.curBai);else renderHome();renderHdrStats();}
+function init(){ld();document.getElementById('f-dat').value=today();rebuildBailSelect('f-bai');renderHome();renderHdrStats();}
+function rebuildBailSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML=D.bails.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');}
+function updateResSelect(){const bid=document.getElementById('f-bai').value;document.getElementById('f-res').innerHTML=`<option value="">— Aucune —</option>`+getResForBail(bid).map(r=>`<option value="${r.id}">${r.name}${r.adr?' – '+r.adr:''}</option>`).join('');}
+function renderHdrStats(){
+  const t=D.mis.length,ec=D.mis.filter(m=>m.sta==='ec').length,at=D.mis.filter(m=>m.sta==='at').length,cl=D.mis.filter(m=>m.sta==='te'||m.sta==='fa').length;
+  document.getElementById('hs').innerHTML=`
+    <div class="hdr-stat"><div class="hdr-stat-n">${t}</div><div class="hdr-stat-l">Total</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-n" style="color:#ea6c0a">${ec}</div><div class="hdr-stat-l">En cours</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-n" style="color:#d97706">${at}</div><div class="hdr-stat-l">Attente</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-n" style="color:#16a34a">${cl}</div><div class="hdr-stat-l">Clôturées</div></div>`;
+}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function renderHome(){
+  showPage('pageHome');document.getElementById('hdrBack').style.display='none';
+  const all=D.mis;
+  const gc=[[null,'Total',all.length],['#d97706','En attente',all.filter(m=>m.sta==='at').length],['#1d4ed8','Planifiées',all.filter(m=>m.sta==='pl').length],['#ea6c0a','En cours',all.filter(m=>m.sta==='ec').length],['#16a34a','Terminées',all.filter(m=>m.sta==='te').length],['#7c3aed','Facturées',all.filter(m=>m.sta==='fa').length]];
+  document.getElementById('gstats').innerHTML=gc.map(([c,l,n])=>`<div class="gstat" style="--gc:${c||'var(--or)'}"><div class="gstat-n">${n}</div><div class="gstat-l">${l}</div></div>`).join('');
+  document.getElementById('blGrid').innerHTML=D.bails.map(b=>{
+    const bm=all.filter(m=>m.bai===b.id),t=bm.length,ec=bm.filter(m=>m.sta==='ec').length,at=bm.filter(m=>m.sta==='at').length,cl=bm.filter(m=>m.sta==='te'||m.sta==='fa').length;
+    const pct=t?Math.round(cl/t*100):0,rc=getResForBail(b.id).length;
+    const cats=CA.map(c=>{const k=CK[c];const n=bm.filter(m=>m.cat===c).length;if(!n)return'';return`<span class="bl-cat" style="background:${CLC[k].bg};color:${CLC[k].c}">${c} (${n})</span>`;}).join('');
+    return`<div class="bl-card" style="--blc:${b.color}" onclick="openBailleur('${b.id}')">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">${b.name}</div>
+        <div class="bl-card-res">${rc} résidence${rc>1?'s':''}</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">${t}</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">${at}</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">${ec}</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">${cl}</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:${pct}%"></div></div>
+        <div class="bl-pct">${pct}% clôturées</div>
+        <div class="bl-cats">${cats||'<span style="font-size:10px;color:var(--tx3)">Aucune intervention</span>'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function goHome(){D.curBai=null;D.sel=null;D.fc=null;D.fs=null;renderHome();}
+
+function goSettings(){
+  showPage('pageSettings');document.getElementById('hdrBack').style.display='flex';
+  renderBailleursList();renderResidencesList();
+  const fsel=document.getElementById('resBailFilter');
+  fsel.innerHTML=`<option value="">Tous les bailleurs</option>`+D.bails.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  rebuildBailSelect('mr-bai');
+}
+function renderBailleursList(){
+  const el=document.getElementById('bailleursList');
+  if(!D.bails.length){el.innerHTML='<div class="empty-sl">Aucun bailleur</div>';return;}
+  el.innerHTML=D.bails.map(b=>{
+    const cnt=D.mis.filter(m=>m.bai===b.id).length,rc=getResForBail(b.id).length;
+    return`<div class="slist-item">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="slist-dot" style="background:${b.color}"></div>
+        <div><div class="slist-name">${b.name}</div><div class="slist-sub">${cnt} intervention${cnt>1?'s':''} · ${rc} résidence${rc>1?'s':''}</div></div>
+      </div>
+      <div class="slist-actions">
+        <button class="sbtn sbtn-e" onclick="openEditBailleur('${b.id}')">✏️</button>
+        <button class="sbtn sbtn-d" onclick="delBailleur('${b.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderResidencesList(){
+  const el=document.getElementById('residencesList');
+  const filter=document.getElementById('resBailFilter')?.value||'';
+  const list=filter?D.res.filter(r=>r.bai===filter):D.res;
+  if(!list.length){el.innerHTML='<div class="empty-sl">Aucune résidence</div>';return;}
+  const byBail={};list.forEach(r=>{if(!byBail[r.bai])byBail[r.bai]=[];byBail[r.bai].push(r);});
+  el.innerHTML=Object.entries(byBail).map(([bid,rs])=>{
+    const b=getBail(bid);
+    return`<div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:${b?.color||'var(--or)'};margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--brd)">${b?.name||bid}</div>
+      ${rs.map(r=>`<div class="slist-item"><div><div class="slist-name">${r.name}</div>${r.adr?`<div class="slist-sub">${r.adr}</div>`:''}</div><div class="slist-actions"><button class="sbtn sbtn-e" onclick="openEditResidence('${r.id}')">✏️</button><button class="sbtn sbtn-d" onclick="delResidence('${r.id}')">🗑️</button></div></div>`).join('')}
+    </div>`;
+  }).join('');
+}
+let selColor=COLORS[0];
+function openAddBailleur(){D.ebid=null;selColor=COLORS[0];document.getElementById('mBailTtl').textContent='Nouveau bailleur';document.getElementById('mb-name').value='';renderColorPicker();document.getElementById('modalBailleur').classList.add('open');}
+function openEditBailleur(id){const b=getBail(id);if(!b)return;D.ebid=id;selColor=b.color;document.getElementById('mBailTtl').textContent='Modifier le bailleur';document.getElementById('mb-name').value=b.name;renderColorPicker();document.getElementById('modalBailleur').classList.add('open');}
+function renderColorPicker(){document.getElementById('colorPicker').innerHTML=COLORS.map(c=>`<div class="cdot${c===selColor?' sel':''}" style="background:${c}" onclick="selColor='${c}';renderColorPicker()"></div>`).join('');}
+function saveBailleur(){
+  const name=document.getElementById('mb-name').value.trim();if(!name){alert('Nom obligatoire');return;}
+  if(D.ebid){const b=getBail(D.ebid);if(b){b.name=name;b.color=selColor;}}
+  else{if(D.bails.find(b=>b.name.toLowerCase()===name.toLowerCase())){alert('Ce bailleur existe déjà');return;}D.bails.push({id:'b'+Date.now(),name,color:selColor});}
+  sd();closeModal('modalBailleur');goSettings();rebuildBailSelect('f-bai');toast('Bailleur enregistré ✓');
+}
+function delBailleur(id){
+  const b=getBail(id);if(!b)return;
+  const cnt=D.mis.filter(m=>m.bai===id).length;
+  if(cnt>0&&!confirm(`Ce bailleur a ${cnt} intervention(s). Supprimer quand même ?`))return;
+  D.bails=D.bails.filter(x=>x.id!==id);D.res=D.res.filter(r=>r.bai!==id);
+  sd();renderBailleursList();renderResidencesList();rebuildBailSelect('f-bai');toast('Bailleur supprimé');
+}
+function openAddResidence(){D.erid=null;document.getElementById('mResTtl').textContent='Nouvelle résidence';document.getElementById('mr-name').value='';document.getElementById('mr-adr').value='';rebuildBailSelect('mr-bai');if(D.curBai)document.getElementById('mr-bai').value=D.curBai;document.getElementById('modalResidence').classList.add('open');}
+function openEditResidence(id){const r=D.res.find(x=>x.id===id);if(!r)return;D.erid=id;document.getElementById('mResTtl').textContent='Modifier la résidence';rebuildBailSelect('mr-bai');document.getElementById('mr-bai').value=r.bai;document.getElementById('mr-name').value=r.name;document.getElementById('mr-adr').value=r.adr||'';document.getElementById('modalResidence').classList.add('open');}
+function saveResidence(){
+  const bai=document.getElementById('mr-bai').value,name=document.getElementById('mr-name').value.trim();if(!name){alert('Nom obligatoire');return;}
+  if(D.erid){const r=D.res.find(x=>x.id===D.erid);if(r){r.bai=bai;r.name=name;r.adr=document.getElementById('mr-adr').value.trim();}}
+  else{D.res.push({id:'r'+Date.now(),bai,name,adr:document.getElementById('mr-adr').value.trim()});}
+  sd();closeModal('modalResidence');renderResidencesList();renderBailleursList();if(D.curBai===bai)updateResSelect();toast('Résidence enregistrée ✓');
+}
+function delResidence(id){if(!confirm('Supprimer ?'))return;D.res=D.res.filter(x=>x.id!==id);sd();renderResidencesList();renderBailleursList();toast('Résidence supprimée');}
+
+function openBailleur(bid){D.curBai=bid;D.sel=null;D.fc=null;D.fs=null;renderBailleur(bid);}
+function renderBailleur(bid){
+  showPage('pageBailleur');document.getElementById('hdrBack').style.display='flex';
+  const b=getBail(bid),bm=D.mis.filter(m=>m.bai===bid);
+  document.getElementById('bpName').textContent=b?.name||bid;
+  document.getElementById('bpCount').textContent=` — ${bm.length} intervention${bm.length>1?'s':''}`;
+  renderBpStats(bid,bm);renderBpCats(bm);renderBpCharts(bm,b);renderBpFilters();renderList(bid);
+  document.getElementById('detPanel').style.display='none';
+}
+function renderBpStats(bid,bm){
+  const tot=bm.length;
+  const rows=[{k:'tot',l:'Total',n:tot,sc:'var(--tx)',sbg:'var(--bg3)'},...ST.map(s=>({k:s.k,l:s.l,n:bm.filter(m=>m.sta===s.k).length,sc:s.sc,sbg:s.sbg}))];
+  document.getElementById('bpStats').innerHTML=rows.map(r=>`
+    <div class="bp-stat${D.fs===r.k?' active':''}" style="--sc:${r.sc};--sbg:${r.sbg}" onclick="clickStat('${r.k}')">
+      <div class="bp-stat-n" style="color:${r.sc}">${r.n}</div>
+      <div class="bp-stat-l">${r.l}</div>
+    </div>`).join('');
+}
+function clickStat(k){D.fs=k==='tot'?null:(D.fs===k?null:k);D.sel=null;const bid=D.curBai;renderBpStats(bid,D.mis.filter(m=>m.bai===bid));updFBadge();renderList(bid);document.getElementById('detPanel').style.display='none';}
+function clearSF(){clickStat('tot');}
+function updFBadge(){
+  const fb=document.getElementById('filterBadge'),lt=document.getElementById('listTitle');
+  if(D.fs){fb.style.display='inline-block';lt.textContent=ST.find(s=>s.k===D.fs)?.l||'';}
+  else if(D.fc){fb.style.display='inline-block';lt.textContent=D.fc;}
+  else{fb.style.display='none';lt.textContent='Toutes les interventions';}
+}
+function renderBpCats(bm){
+  document.getElementById('bpCats').innerHTML=CA.map(c=>{const k=CK[c];const n=bm.filter(m=>m.cat===c).length;return`<div class="bp-cat" style="background:${CLC[k].bg};border:1px solid ${CLC[k].c}30"><div class="bp-cat-n" style="color:${CLC[k].c}">${n}</div><div class="bp-cat-l" style="color:${CLC[k].c}">${c}</div></div>`;}).join('');
+}
+function renderBpCharts(bm,b){
+  const tot=bm.length;
+  const sb=ST.map(s=>{const n=bm.filter(m=>m.sta===s.k).length;const p=tot?Math.round(n/tot*100):0;return`<div class="bar-row"><div class="bar-top"><span class="bar-lbl">${s.l}</span><span class="bar-val">${n}</span></div><div class="bar-tr"><div class="bar-fi" style="width:${p}%;background:${s.sc}"></div></div></div>`;}).join('');
+  const cb=CA.map(c=>{const k=CK[c];const n=bm.filter(m=>m.cat===c).length;const p=tot?Math.round(n/tot*100):0;return`<div class="bar-row"><div class="bar-top"><span class="bar-lbl">${c}</span><span class="bar-val">${n}</span></div><div class="bar-tr"><div class="bar-fi" style="width:${p}%;background:${CLC[k].c}"></div></div></div>`;}).join('');
+  document.getElementById('bpCharts').innerHTML=`<div class="bpc"><div class="bpc-h">Par statut</div><div class="bpc-b">${tot?sb:'<div class="nr">Aucune donnée</div>'}</div></div><div class="bpc"><div class="bpc-h">Par catégorie</div><div class="bpc-b">${tot?cb:'<div class="nr">Aucune donnée</div>'}</div></div>`;
+}
+function renderBpFilters(){
+  document.getElementById('bpFilters').innerHTML=`<input class="srch" id="srch" placeholder="🔍 Réf, locataire, adresse..." oninput="renderList(D.curBai)">`+CA.map(c=>{const k=CK[c];return`<div class="chip ${k}${D.fc===c?' on':''}" onclick="tfc('${c}')">${c}</div>`;}).join('');
+}
+function tfc(c){D.fc=D.fc===c?null:c;D.sel=null;updFBadge();renderList(D.curBai);document.getElementById('detPanel').style.display='none';}
+function gf(bid){
+  const q=(document.getElementById('srch')?.value||'').toLowerCase();
+  return D.mis.filter(m=>{
+    if(m.bai!==bid)return false;if(D.fc&&m.cat!==D.fc)return false;if(D.fs&&m.sta!==D.fs)return false;
+    if(q){const h=[m.ref,m.rec,m.des,m.dem,m.loc,m.adr,m.not,m.resname].join(' ').toLowerCase();if(!h.includes(q))return false;}
+    return true;
+  });
+}
+function sv(v){D.view=v;document.getElementById('vl').style.display=v==='l'?'block':'none';document.getElementById('vt').style.display=v==='t'?'block':'none';document.getElementById('vbl').className='vb'+(v==='l'?' on':'');document.getElementById('vbt').className='vb'+(v==='t'?' on':'');}
+function renderList(bid){
+  const ms=gf(bid);
+  document.getElementById('vl').innerHTML=!ms.length?'<div class="nr">Aucune intervention pour ce filtre</div>':ms.map(m=>{
+    const k=CK[m.cat]||'tc',s=ST.find(x=>x.k===m.sta)||ST[0];
+    return`<div class="mcard${m.id===D.sel?' on':''}" onclick="selM('${m.id}')"><div class="mcard-inner">
+      <div>
+        <div class="mcard-ref">${m.ref||'—'} · ${m.dat||''}${m.rec?' · Récl. '+m.rec:''}</div>
+        <div class="mcard-title">${m.des.length>80?m.des.slice(0,80)+'…':m.des}</div>
+        <div class="mcard-meta">
+          <span class="bdg b-${k}">${m.cat}</span>
+          ${m.resname?`<span style="font-size:10px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 8px;border-radius:5px">🏘 ${m.resname}</span>`:''}
+          ${m.loc?`<span style="font-size:11px;color:var(--tx3)">👤 ${m.loc}</span>`:''}
+          ${m.adr?`<span style="font-size:11px;color:var(--tx3)">📍 ${m.adr.slice(0,40)}</span>`:''}
+        </div>
+      </div>
+      <div class="mcard-r">
+        <span class="sb ${SC[m.sta]}">${s.l}</span>
+        ${m.mnt?`<span style="font-size:14px;font-weight:700;color:#16a34a">${m.mnt} €</span>`:''}
+      </div>
+    </div></div>`;
+  }).join('');
+  document.getElementById('vt').innerHTML=!ms.length?'<div class="nr">Aucune intervention</div>':`<div class="tw"><table class="dt"><thead><tr><th>N° BT</th><th>Date</th><th>Résidence</th><th>Catégorie</th><th>Description</th><th>Locataire</th><th>Tél.</th><th>Montant HT</th><th>Statut</th></tr></thead><tbody>`+ms.map(m=>{const k=CK[m.cat]||'tc',s=ST.find(x=>x.k===m.sta)||ST[0];return`<tr onclick="selM('${m.id}')"><td class="mn">${m.ref||'—'}</td><td>${m.dat||'—'}</td><td style="font-size:11px;font-weight:600;color:var(--tx2)">${m.resname||'—'}</td><td><span class="bdg b-${k}">${m.cat}</span></td><td>${m.des.slice(0,45)}${m.des.length>45?'…':''}</td><td>${m.loc||'—'}</td><td class="mn">${m.tel||'—'}</td><td style="font-weight:700;color:#16a34a">${m.mnt?m.mnt+' €':'—'}</td><td><span class="sb ${SC[m.sta]}">${s.l}</span></td></tr>`;}).join('')+'</tbody></table></div>';
+  sv(D.view);
+}
+function selM(id){D.sel=id;renderList(D.curBai);const m=D.mis.find(x=>x.id===id);if(m)showDet(m);setTimeout(()=>{document.getElementById('detPanel').scrollIntoView({behavior:'smooth',block:'nearest'});},80);}
+function showDet(m){
+  const dp=document.getElementById('detPanel');dp.style.display='block';
+  const k=CK[m.cat]||'tc',opts=ST.map(x=>`<option value="${x.k}"${m.sta===x.k?' selected':''}>${x.l}</option>`).join('');
+  dp.innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+    <div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap">
+        <span class="bdg b-${k}">${m.cat}</span>
+        ${m.resname?`<span style="font-size:11px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 9px;border-radius:5px">🏘 ${m.resname}</span>`:''}
+        ${m.ref?`<span class="bt-tag bt-bt">BT ${m.ref}</span>`:''}
+        ${m.rec?`<span class="bt-tag bt-rec">Récl. ${m.rec}</span>`:''}
+      </div>
+      <div style="font-size:20px;font-weight:800;color:var(--tx);line-height:1.25">${m.des.length>80?m.des.slice(0,80)+'…':m.des}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx3);margin-top:5px">${m.dat||''}${m.del?' · Délai : '+m.del:''}</div>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <select class="ssel" onchange="ust('${m.id}',this.value)">${opts}</select>
+      <button class="btn btn-g" onclick="openEdit('${m.id}')">✏️ Modifier</button>
+      <button class="btn btn-d" onclick="del('${m.id}')">🗑️</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+    <div class="dw"><div class="dw-h">Bon de travaux</div><div class="dw-b"><div class="ig" style="grid-template-columns:1fr 1fr">
+      <div><div class="il">N° Bon</div><div class="iv" style="font-family:'JetBrains Mono',monospace;font-size:12px">${m.ref||'—'}</div></div>
+      <div><div class="il">N° Réclamation</div><div class="iv" style="font-family:'JetBrains Mono',monospace;font-size:12px">${m.rec||'—'}</div></div>
+      <div><div class="il">Date</div><div class="iv">${m.dat||'—'}</div></div>
+      <div><div class="il">Délai</div><div class="iv" style="font-size:12px">${m.del||'—'}</div></div>
+      <div><div class="il">Montant HT</div><div class="iv" style="font-size:18px;font-weight:800;color:#16a34a">${m.mnt?m.mnt+' €':'—'}</div></div>
+      <div><div class="il">Résidence</div><div class="iv" style="color:var(--tx2)">${m.resname||'—'}</div></div>
+    </div></div></div>
+    <div class="dw"><div class="dw-h">Intervenants</div><div class="dw-b"><div class="ig" style="grid-template-columns:1fr">
+      <div><div class="il">Demandeur</div><div class="iv">${m.dem||'—'}</div></div>
+      <div><div class="il">Locataire</div><div class="iv">${m.loc||'—'}</div></div>
+      <div><div class="il">Téléphone</div><div class="iv">${m.tel?`<a href="tel:${m.tel}">${m.tel}</a>`:'—'}</div></div>
+    </div></div></div>
+  </div>
+  <div class="dw" style="margin-bottom:10px"><div class="dw-h">📍 Adresse d'intervention</div><div class="dw-b">
+    <div style="font-size:14px;font-weight:600">${m.adr||'—'}</div>
+    ${m.adr?`<a href="https://maps.google.com?q=${encodeURIComponent(m.adr)}" target="_blank" style="font-size:12px;color:var(--or);margin-top:5px;display:inline-block;font-weight:600">📍 Google Maps ↗</a>`:''}
+  </div></div>
+  <div class="dw" style="margin-bottom:10px"><div class="dw-h">Description complète</div><div class="dw-b"><div style="font-size:13px;line-height:1.75;color:var(--tx2);white-space:pre-wrap">${m.des}</div></div></div>
+  <div class="dw"><div class="dw-h">Notes internes</div><div class="dw-b">
+    <textarea class="ntxt" id="ntx" placeholder="Observations, matériaux, accès...">${m.not||''}</textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:9px"><button class="btn btn-p" onclick="snot('${m.id}')">Sauvegarder</button></div>
+  </div></div>`;
+}
+function ust(id,v){const m=D.mis.find(x=>x.id===id);if(m){m.sta=v;sd();const bid=D.curBai,bm=D.mis.filter(m=>m.bai===bid);renderBpStats(bid,bm);renderBpCats(bm);renderBpCharts(bm,getBail(bid));renderList(bid);renderHdrStats();}}
+function snot(id){const m=D.mis.find(x=>x.id===id);if(m){m.not=document.getElementById('ntx').value;sd();toast('Notes sauvegardées ✓');}}
+function del(id){if(!confirm('Supprimer ?'))return;D.mis=D.mis.filter(x=>x.id!==id);D.sel=null;sd();renderBailleur(D.curBai);renderHdrStats();}
+function toast(msg){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--or);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;z-index:9999;font-weight:700;box-shadow:0 4px 20px rgba(249,115,22,.4);font-family:Plus Jakarta Sans,sans-serif';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
+function clrForm(){['f-ref','f-rec','f-des','f-dem','f-loc','f-tel','f-adr','f-not','f-del','f-mnt'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';e.classList.remove('af');}});document.getElementById('f-cat').value='';document.getElementById('f-sta').value='at';document.getElementById('f-dat').value=today();clearPdf();}
+function openAdd(){D.eid=null;document.getElementById('mttl').textContent='Nouvelle intervention';clrForm();rebuildBailSelect('f-bai');document.getElementById('f-bai').value=D.curBai||D.bails[0]?.id||'';updateResSelect();document.getElementById('modal').classList.add('open');}
+function openEdit(id){const m=D.mis.find(x=>x.id===id);if(!m)return;D.eid=id;document.getElementById('mttl').textContent="Modifier l'intervention";clearPdf();rebuildBailSelect('f-bai');const map={ref:m.ref,rec:m.rec,des:m.des,dem:m.dem,loc:m.loc,tel:m.tel,adr:m.adr,not:m.not,del:m.del,mnt:m.mnt};Object.entries(map).forEach(([k,v])=>{const e=document.getElementById(`f-${k}`);if(e){e.value=v||'';e.classList.remove('af');}});document.getElementById('f-bai').value=m.bai;document.getElementById('f-dat').value=m.dat;document.getElementById('f-cat').value=m.cat;document.getElementById('f-sta').value=m.sta;updateResSelect();document.getElementById('f-res').value=m.res||'';document.getElementById('modal').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function save(){
+  const bai=document.getElementById('f-bai').value,cat=document.getElementById('f-cat').value,des=document.getElementById('f-des').value.trim(),adr=document.getElementById('f-adr').value.trim();
+  if(!cat||!des||!adr){alert('Champs obligatoires : Catégorie, Description, Adresse');return;}
+  const resId=document.getElementById('f-res').value,resname=resId?D.res.find(r=>r.id===resId)?.name:'';
+  const data={bai,dat:document.getElementById('f-dat').value,ref:document.getElementById('f-ref').value.trim(),rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc:document.getElementById('f-loc').value.trim(),tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId,resname};
+  if(D.eid){const i=D.mis.findIndex(x=>x.id===D.eid);if(i>=0)D.mis[i]={...D.mis[i],...data};}
+  else{data.id='M'+Date.now();D.mis.unshift(data);}
+  sd();closeModal('modal');D.curBai=bai;renderBailleur(bai);renderHdrStats();
+}
+function clearPdf(){document.getElementById('pres').style.display='none';document.getElementById('pfg').innerHTML='';document.getElementById('pfi').value='';}
+function pdrop(e){e.preventDefault();document.getElementById('pdz').classList.remove('dv');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')ppdf(f);}
+function pfile(e){const f=e.target.files[0];if(f)ppdf(f);e.target.value='';}
+async function ppdf(file){
+  document.getElementById('pload').style.display='block';document.getElementById('pres').style.display='none';
+  try{const ab=await file.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:ab}).promise;let raw='';for(let i=1;i<=Math.min(pdf.numPages,6);i++){const pg=await pdf.getPage(i);const ct=await pg.getTextContent();raw+=ct.items.map(x=>x.str).join(' ')+'\n';}xpdf(raw);}
+  catch(e){alert('Erreur PDF : '+e.message);}
+  document.getElementById('pload').style.display='none';
+}
+function setAf(id,v){if(!v)return;const e=document.getElementById(id);if(e&&!e.value){e.value=v;e.classList.add('af');}}
+function xpdf(raw){
+  const t=raw.replace(/\s+/g,' ').trim();
+  const tl=t.toLowerCase();
+  const ex={};let m;
+
+  // ── Détection du format ──────────────────────────────────────
+  const isVilogia = tl.includes('vilogia') || tl.includes('bon de commande');
+  const isErilia  = tl.includes('erilia');
+
+  // ── N° BON ───────────────────────────────────────────────────
+  // Vilogia : "Bon de commande n° : LOG/N38708"
+  m=t.match(/[Bb]on\s+de\s+commande\s+n°\s*:?\s*([\w\/\-]+)/i);
+  if(m)ex.ref=m[1].trim();
+  // Erilia : "N° 2026 40576"
+  if(!ex.ref){m=t.match(/N°\s*(\d{4}\s*\d{4,6})/);if(m)ex.ref=m[1].replace(/\s/g,'');}
+
+  // ── N° RECLAMATION / DEVIS ───────────────────────────────────
+  // Vilogia : "Demande de devis n°DEV26-13150"
+  m=t.match(/[Dd]emande\s+de\s+devis\s+n°([\w\-]+)/i);
+  if(m)ex.rec=m[1].trim();
+  // Erilia : "Récl. Tech. n° 2026/33459"
+  if(!ex.rec){m=t.match(/R[eé]cl(?:amation)?\.?\s*(?:Tech\.?)?\s*n°?\s*([\d\/\s]+?)(?=\s[A-Z\n]|$)/i);if(m)ex.rec=m[1].trim().replace(/\s/g,'');}
+
+  // ── DATE ─────────────────────────────────────────────────────
+  // Vilogia : "du : 27/03/2026"
+  m=t.match(/du\s*:\s*(\d{2}\/\d{2}\/\d{4})/i);
+  if(m){const p=m[1].split('/');ex.dat=`${p[2]}-${p[1]}-${p[0]}`;}
+  // Vilogia : "Travaux à réaliser pour le 27/03/2026"
+  if(!ex.dat){m=t.match(/pour\s+le\s+(\d{2}\/\d{2}\/\d{4})/i);if(m){const p=m[1].split('/');ex.dat=`${p[2]}-${p[1]}-${p[0]}`;}}
+  // Erilia : "Édité le 23-03-2026"
+  if(!ex.dat){m=t.match(/[EÉ]dit[eé]\s*le\s*(\d{2}-\d{2}-\d{4})/i);if(m){const p=m[1].split('-');ex.dat=`${p[2]}-${p[1]}-${p[0]}`;}}
+
+  // ── DÉLAI ────────────────────────────────────────────────────
+  m=t.match(/P[EÉ]RIODE\s*DU\s*(\d{2}-\d{2}-\d{4})\s*AU\s*(\d{2}-\d{2}-\d{4})/i);if(m)ex.del=`${m[1]} au ${m[2]}`;
+  if(!ex.del&&isVilogia&&ex.dat){
+    // Vilogia : date = délai dans ce format
+    m=t.match(/[Tt]ravaux\s+[àa]\s+r[eé]aliser\s+pour\s+le\s+(\d{2}\/\d{2}\/\d{4})/i);
+    if(m)ex.del=`Pour le ${m[1]}`;
+  }
+
+  // ── DEMANDEUR / ÉMETTEUR ──────────────────────────────────────
+  // Vilogia : "Emetteur : M. Zakaria DIAKHITE"
+  m=t.match(/[EÉ]metteur\s*:\s*([^\n,;]{3,50}?)(?=\s*email|\s*mail|\s*tél|$)/i);
+  if(m)ex.dem=m[1].trim();
+  // Erilia : "SERVICE ÉMETTEUR ..."
+  if(!ex.dem){m=t.match(/SERVICE[S]?\s+[EÉ]METTEUR\s+([A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]{4,60}?)(?=\s*LOCALISATION|\s*\d|\s*$)/i);if(m)ex.dem=m[1].trim().slice(0,60);}
+  if(!ex.dem){m=t.match(/ERILIA\s+(AGENCE\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ]+)/i);if(m)ex.dem='ERILIA '+m[1].trim();}
+
+  // ── LOCATAIRE (Erilia) / pas de locataire sur Vilogia parties communes ──
+  if(!isVilogia||!tl.includes('parties communes')){
+    m=t.match(/((?:MME|M\.|MONSIEUR|MADAME)\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ][A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]{2,35}?)\s+\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|R[EÉ]SIDENCE)/i);if(m)ex.loc=m[1].trim();
+    if(!ex.loc){const ns=[...t.matchAll(/(MME|M\.|MONSIEUR|MADAME)\s+([A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ]+\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\-]+)/g)];if(ns.length)ex.loc=ns[ns.length-1][0].trim();}
+  }
+
+  // ── ADRESSE D'INTERVENTION ────────────────────────────────────
+  // Vilogia : bloc après "BATIMENT X" → adresse + CP ville
+  if(isVilogia){
+    m=t.match(/BATIMENT\s+\w[\w\s]*?(\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|SAINT|SAINT)[^\d]{3,50}\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,20})/i);
+    if(m)ex.adr=m[1].replace(/\s+/g,' ').trim();
+    // Fallback : cherche une adresse numérotée avec CP 130xx (Marseille) dans le texte
+    if(!ex.adr){m=t.match(/(\d+\s+(?:RUE|AVENUE|AVENUE\s+SAINT|AVENUE\s+DE|BOULEVARD|IMPASSE|CHEMIN|ALL[EÉ]E|PLACE|ROUTE)\s+[^\d]{3,50}1[23]\d{3}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,20})/i);if(m)ex.adr=m[1].replace(/\s+/g,' ').trim();}
+  }
+  // Erilia fallbacks
+  if(!ex.adr){m=t.match(/(?:MME|M\.|MONSIEUR|MADAME)\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]+\s+(\d+\s+(?:RUE|AVENUE|IMPASSE|CHEMIN|ALL[EÉ]E|BOULEVARD|PLACE|R[EÉ]SIDENCE)[^T]{5,60}?\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,25}?)(?:T[eé]l|$)/i);if(m)ex.adr=m[1].replace(/\s+/g,' ').trim();}
+  if(!ex.adr){m=t.match(/(\d+\s+(?:IMPASSE|RUE|AVENUE|BOULEVARD|ALL[EÉ]E|CHEMIN|PLACE|R[EÉ]SIDENCE)\s+[^0-9]{4,50}\d{5}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s]{2,20})/i);if(m)ex.adr=m[1].replace(/\s+/g,' ').trim();}
+
+  // ── TÉLÉPHONE ────────────────────────────────────────────────
+  // Vilogia : "tél : 0660034313"
+  m=t.match(/t[eé]l\s*:?\s*(0[0-9][\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2})/i);
+  if(m)ex.tel=m[1].replace(/[\s\.]/g,'');
+  if(!ex.tel){const mobs=[...t.matchAll(/\b(0[67]\d{2}[\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2})\b/g)];if(mobs.length)ex.tel=mobs[mobs.length-1][1].replace(/[\s\.]/g,'');}
+  if(!ex.tel){const fix=[...t.matchAll(/\b(0[1-5]\d{2}[\s\.]?\d{2}[\s\.]?\d{2}[\s\.]?\d{2})\b/g)];if(fix.length)ex.tel=fix[fix.length-1][1].replace(/[\s\.]/g,'');}
+
+  // ── DESCRIPTION ───────────────────────────────────────────────
+  // Vilogia : titre sous "Bon de commande n°" avant le bloc adresse
+  if(isVilogia){
+    m=t.match(/[Bb]on\s+de\s+commande\s+n°\s*:?\s*[\w\/\-]+\s*(?:\(.*?\))?\s*(?:du\s*:\s*[\d\/]+\s*)?([^\d][^€\n]{8,120}?)(?=\s*VILOGIA|\s*Vilogia|\s*\d+[,\s])/i);
+    if(m)ex.des=m[1].trim().replace(/\s+/g,' ');
+  }
+  // Erilia : colonne DÉSIGNATION du tableau
+  if(!ex.des){m=t.match(/D[EÉ]SIGNATION\s+UNIT[EÉ][\s\S]{0,60}?((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|V[eé]rification|D[eé]bouchage|Nettoyage|Installation|Changement|Trav)[^\d€]{15,250}?)(?:\d|FOR|ENS|TOTAL|H\.T\.)/i);if(m)ex.des=m[1].replace(/\s+/g,' ').trim();}
+  if(!ex.des){m=t.match(/((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|Changement|Trav\.|Installation)\s+[^\d€]{10,200})/i);if(m)ex.des=m[1].replace(/\s+/g,' ').trim();}
+
+  // ── MONTANT HT ───────────────────────────────────────────────
+  m=t.match(/Total\s*HT\s*([\d\s]+[,\.]\d{2})\s*€?/i);
+  if(m)ex.mnt=m[1].replace(/\s/g,'').replace('.',',');
+  if(!ex.mnt){m=t.match(/TOTAL\s*H\.?T\.?\s*([\d\s]+[,\.]\d{2})/i);if(m)ex.mnt=m[1].replace(/\s/g,'').replace('.',',');}
+
+  // ── BAILLEUR AUTO-DETECT ──────────────────────────────────────
+  let detectedBail=null;
+  if(tl.includes('vilogia')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('vilogia'));ex._bai=detectedBail?.name;}
+  else if(tl.includes('erilia')&&tl.includes('avignon')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('avignon'));ex._bai=detectedBail?.name;}
+  else if(tl.includes('erilia')&&tl.includes('marseille')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('marseille'));ex._bai=detectedBail?.name;}
+  else if(tl.includes('erilia')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia'));ex._bai=detectedBail?.name;}
+  if(detectedBail){document.getElementById('f-bai').value=detectedBail.id;updateResSelect();}
+  if(detectedBail){const ress=getResForBail(detectedBail.id);const matched=ress.find(r=>tl.includes(r.name.toLowerCase()));if(matched){document.getElementById('f-res').value=matched.id;ex._res=matched.name;}}
+  if(!document.getElementById('f-cat').value){
+    if(tl.match(/plomb|ballo|ecs|cumulus|robinet|canalisation|wc|toil|tuyau|chauffe|sanitaire/))document.getElementById('f-cat').value='Plomberie';
+    else if(tl.match(/maçon|b[eé]ton|fissure|[eé]tanch|toiture|infiltr/))document.getElementById('f-cat').value='Maçonnerie / Étanchéité';
+    else if(tl.match(/peinture|repeindre|vernis/))document.getElementById('f-cat').value='Peinture';
+    else if(tl.match(/porte|fen[eê]tre|serrure|volet|menuiserie|cylindre|stop.park|m[eé]tallerie|serrurerie/))document.getElementById('f-cat').value='Menuiserie';
+  }
+  if(ex.ref)setAf('f-ref',ex.ref);if(ex.rec)setAf('f-rec',ex.rec);
+  if(ex.dat){const e=document.getElementById('f-dat');if(e)e.value=ex.dat;}
+  if(ex.del)setAf('f-del',ex.del);if(ex.loc)setAf('f-loc',ex.loc);if(ex.adr)setAf('f-adr',ex.adr);
+  if(ex.tel)setAf('f-tel',ex.tel);if(ex.dem)setAf('f-dem',ex.dem);if(ex.des)setAf('f-des',ex.des);if(ex.mnt)setAf('f-mnt',ex.mnt);
+  const lbl={ref:'N° Bon',rec:'Réclamation',dat:'Date',del:'Délai',loc:'Locataire',adr:'Adresse',tel:'Téléphone',dem:'Demandeur',des:'Description',mnt:'Montant HT',_bai:'Bailleur',_res:'Résidence'};
+  const done=Object.entries(ex).filter(([,v])=>v);
+  if(done.length){document.getElementById('pfg').innerHTML=done.map(([k,v])=>`<div class="pdf-fr"><div class="pdf-fk">${lbl[k]||k}</div><div class="pdf-fv">${String(v).slice(0,70)}</div></div>`).join('');document.getElementById('pokl').textContent=`✅ ${done.length} champ${done.length>1?'s':''} extrait${done.length>1?'s':''}`;document.getElementById('pres').style.display='block';toast(`📄 ${done.length} champ${done.length>1?'s':''} extrait${done.length>1?'s':''}`);}
+  else toast('⚠️ Aucune donnée reconnue');
+}
+init();
+</script></body></html>
