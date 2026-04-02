@@ -601,6 +601,15 @@ firebase.initializeApp({
     </div>
   </div>
 </div>
+<!-- ZONE DROP PDF GLOBALE -->
+<div id="pdfDropOverlay" style="display:none;position:fixed;inset:0;background:rgba(249,115,22,.15);border:4px dashed var(--or);z-index:9999;pointer-events:none;transition:all .2s">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;background:#fff;border-radius:20px;padding:40px 60px;box-shadow:0 20px 60px rgba(249,115,22,.3)">
+    <div style="font-size:60px;margin-bottom:12px">📄</div>
+    <div style="font-size:22px;font-weight:800;color:var(--or)">Déposer le bon de travaux</div>
+    <div style="font-size:14px;color:var(--tx3);margin-top:8px">L'extraction démarre automatiquement</div>
+  </div>
+</div>
+
 <button id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Retour en haut">↑</button>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='./pdf.worker.min.js';
@@ -2279,6 +2288,79 @@ function renderSynthese(){
       </div>
     </div>`;
 }
+
+// ════════════════════════════════════════════════════════
+// GLISSER-DÉPOSER PDF GLOBAL → extraction automatique
+// ════════════════════════════════════════════════════════
+let _dragCounter = 0;
+
+document.addEventListener('dragenter', e=>{
+  // Vérifier si c'est un fichier (pas un élément HTML)
+  if(!e.dataTransfer.types.includes('Files')) return;
+  _dragCounter++;
+  const overlay = document.getElementById('pdfDropOverlay');
+  if(overlay) overlay.style.display = 'block';
+  e.preventDefault();
+});
+
+document.addEventListener('dragleave', e=>{
+  _dragCounter--;
+  if(_dragCounter <= 0){
+    _dragCounter = 0;
+    const overlay = document.getElementById('pdfDropOverlay');
+    if(overlay) overlay.style.display = 'none';
+  }
+});
+
+document.addEventListener('dragover', e=>{
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+document.addEventListener('drop', e=>{
+  e.preventDefault();
+  _dragCounter = 0;
+  const overlay = document.getElementById('pdfDropOverlay');
+  if(overlay) overlay.style.display = 'none';
+
+  const files = e.dataTransfer.files;
+  if(!files || !files.length) return;
+
+  const pdf = Array.from(files).find(f=>f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));
+  if(!pdf){
+    toast('⚠️ Seuls les fichiers PDF sont acceptés pour l\'extraction');
+    return;
+  }
+
+  // Ouvrir le formulaire nouvelle intervention si pas déjà ouvert
+  if(!document.getElementById('modal').classList.contains('open')){
+    openAdd();
+  }
+
+  toast('📄 Lecture du PDF en cours...');
+
+  // Lire le PDF et lancer l'extraction
+  const reader = new FileReader();
+  reader.onload = async e2 => {
+    try{
+      const typedArray = new Uint8Array(e2.target.result);
+      const pdf2 = await pdfjsLib.getDocument({data: typedArray}).promise;
+      let fullText = '';
+      for(let p=1; p<=Math.min(pdf2.numPages, 4); p++){
+        const page = await pdf2.getPage(p);
+        const tc   = await page.getTextContent();
+        fullText  += tc.items.map(i=>i.str).join(' ') + '\n';
+      }
+      // Appeler l'extraction BPU
+      xpdf(fullText);
+      toast('✅ PDF extrait avec succès !');
+    }catch(err){
+      console.error('Drop PDF:', err);
+      toast('❌ Erreur lecture PDF : '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(pdf);
+});
 
 init();
 </script></body></html>
