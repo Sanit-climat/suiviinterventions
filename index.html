@@ -274,6 +274,16 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);c
 .pdf-fk{font-size:9px;color:var(--tx3);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 .pdf-fv{font-size:11px;color:var(--tx);margin-top:2px;font-weight:600}
 
+.res-tab:hover{color:var(--or)!important}
+.res-tab.active{color:var(--or)!important;border-bottom:2px solid var(--or)!important;margin-bottom:-2px}
+.month-bar{display:flex;align-items:flex-end;gap:4px;height:120px;padding:8px 0}
+.month-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.month-bar-fill{width:100%;background:var(--or);border-radius:3px 3px 0 0;min-height:2px;transition:height .3s}
+.month-label{font-size:9px;font-weight:700;color:var(--tx3);white-space:nowrap}
+.month-val{font-size:10px;font-weight:700;color:var(--tx)}
+.doc-folder{background:#fff;border:1px solid var(--brd);border-radius:var(--rl);overflow:hidden;margin-bottom:10px}
+.doc-folder-hdr{padding:12px 16px;background:var(--bg3);border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:8px;cursor:pointer}
+.doc-folder-body{padding:14px 16px}
 .cpick{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
 .cdot{width:26px;height:26px;border-radius:6px;cursor:pointer;transition:transform .1s;border:3px solid transparent}
 .cdot:hover{transform:scale(1.15)}
@@ -395,6 +405,38 @@ firebase.initializeApp({
     <div id="vl"></div>
     <div id="vt" style="display:none"></div>
     <div id="detPanel" style="display:none;margin-top:20px;border-top:2px solid var(--or);padding-top:20px"></div>
+  </div>
+</div>
+
+<!-- PAGE RÉSIDENCE -->
+<div class="page" id="pageResidence">
+  <div class="bp">
+    <div class="bp-hdr">
+      <div>
+        <div class="page-eyebrow" id="resEyebrow">Résidence</div>
+        <span class="bp-name" id="resName"></span>
+        <span class="bp-count" id="resCount"></span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-g" id="resBailBtn" onclick="">← Bailleur</button>
+        <button class="btn-add" onclick="openAddForRes()">＋ Nouvelle intervention</button>
+      </div>
+    </div>
+
+    <!-- Stats résidence -->
+    <div class="bp-stats" id="resStats"></div>
+
+    <!-- Onglets -->
+    <div style="display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--brd)">
+      <button class="res-tab active" id="tab-interventions" onclick="switchResTab('interventions')" style="padding:9px 20px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;color:var(--or);border-bottom:2px solid var(--or);margin-bottom:-2px;font-family:'Plus Jakarta Sans',sans-serif">📋 Interventions</button>
+      <button class="res-tab" id="tab-stats" onclick="switchResTab('stats')" style="padding:9px 20px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;color:var(--tx3);font-family:'Plus Jakarta Sans',sans-serif">📊 Stats mensuelles</button>
+      <button class="res-tab" id="tab-docs" onclick="switchResTab('docs')" style="padding:9px 20px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;color:var(--tx3);font-family:'Plus Jakarta Sans',sans-serif">📁 Documents</button>
+    </div>
+
+    <!-- Contenu onglets -->
+    <div id="resTabContent">
+      <div id="resInterventions"></div>
+    </div>
   </div>
 </div>
 
@@ -720,7 +762,7 @@ function filterHome(sta, label){
             <div class="mcard-title">${m.des.length>70?m.des.slice(0,70)+'…':m.des}</div>
             <div class="mcard-meta">
               <span class="bdg b-${k}">${m.cat}</span>
-              ${m.resname?`<span style="font-size:10px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 7px;border-radius:5px">🏘 ${m.resname}</span>`:''}
+              ${m.res&&m.resname?`<span onclick="event.stopPropagation();openResidence('${m.res}')" style="font-size:10px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 7px;border-radius:5px;cursor:pointer">🏘 ${m.resname}</span>`:''}
               ${m.loc?`<span style="font-size:11px;color:var(--tx3)">👤 ${m.loc}</span>`:''}
               ${m.adr?`<span style="font-size:11px;color:var(--tx3)">📍 ${m.adr.slice(0,35)}</span>`:''}
             </div>
@@ -765,7 +807,7 @@ async function resetResidences(){
   }
 }
 
-function goHome(){D.curBai=null;D.sel=null;D.fc=null;D.fs=null;renderHome();}
+function goHome(){D.curBai=null;D.sel=null;D.fc=null;D.fs=null;curRes=null;renderHome();}
 
 function goSettings(){
   showPage('pageSettings');document.getElementById('hdrBack').style.display='flex';
@@ -801,7 +843,7 @@ function renderResidencesList(){
     const b=getBail(bid);
     return`<div style="margin-bottom:14px">
       <div style="font-size:11px;font-weight:700;color:${b?.color||'var(--or)'};margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--brd)">${b?.name||bid}</div>
-      ${rs.map(r=>`<div class="slist-item"><div><div class="slist-name">${r.name}</div>${r.adr?`<div class="slist-sub">${r.adr}</div>`:''}</div><div class="slist-actions"><button class="sbtn sbtn-e" onclick="openEditResidence('${r.id}')">✏️</button><button class="sbtn sbtn-d" onclick="delResidence('${r.id}')">🗑️</button></div></div>`).join('')}
+      ${rs.map(r=>`<div class="slist-item"><div><div class="slist-name" onclick="openResidence('${r.id}')" style="cursor:pointer;color:var(--or)">${r.name} ↗</div>${r.adr?`<div class="slist-sub">${r.adr}</div>`:''}</div><div class="slist-actions"><button class="sbtn sbtn-e" onclick="openEditResidence('${r.id}')">✏️</button><button class="sbtn sbtn-d" onclick="delResidence('${r.id}')">🗑️</button></div></div>`).join('')}
     </div>`;
   }).join('');
 }
@@ -903,7 +945,7 @@ function renderList(bid){
         <div class="mcard-title">${m.des.length>80?m.des.slice(0,80)+'…':m.des}</div>
         <div class="mcard-meta">
           <span class="bdg b-${k}">${m.cat}</span>
-          ${m.resname?`<span style="font-size:10px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 8px;border-radius:5px">🏘 ${m.resname}</span>`:''}
+          ${m.res&&m.resname?`<span onclick="event.stopPropagation();openResidence('${m.res}')" style="font-size:10px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 8px;border-radius:5px;cursor:pointer;" title="Voir la résidence">🏘 ${m.resname}</span>`:''}
           ${m.loc?`<span style="font-size:11px;color:var(--tx3)">👤 ${m.loc}</span>`:''}
           ${m.adr?`<span style="font-size:11px;color:var(--tx3)">📍 ${m.adr.slice(0,40)}</span>`:''}
         </div>
@@ -914,7 +956,7 @@ function renderList(bid){
       </div>
     </div></div>`;
   }).join('');
-  document.getElementById('vt').innerHTML=!ms.length?'<div class="nr">Aucune intervention</div>':`<div class="tw"><table class="dt"><thead><tr><th>!</th><th>N° BT</th><th>Date</th><th>Résidence</th><th>Catégorie</th><th>Description</th><th>Locataire</th><th>Tél.</th><th>Montant HT</th><th>Statut</th></tr></thead><tbody>`+ms.map(m=>{const k=CK[m.cat]||'tc',s=ST.find(x=>x.k===m.sta)||ST[0];return`<tr onclick="selM('${m.id}')" style="${m.urg?'background:#fff5f5':''}"><td style="text-align:center">${m.urg?'<span class="urg-badge" style="padding:1px 5px">🔴</span>':''}</td><td class="mn">${m.ref||'—'}</td><td>${m.dat||'—'}</td><td style="font-size:11px;font-weight:600;color:var(--tx2)">${m.resname||'—'}</td><td><span class="bdg b-${k}">${m.cat}</span></td><td>${m.des.slice(0,45)}${m.des.length>45?'…':''}</td><td>${m.loc||'—'}</td><td class="mn">${m.tel||'—'}</td><td style="font-weight:700;color:#16a34a">${m.mnt?m.mnt+' €':'—'}</td><td><span class="sb ${SC[m.sta]}">${s.l}</span></td></tr>`;}).join('')+'</tbody></table></div>';
+  document.getElementById('vt').innerHTML=!ms.length?'<div class="nr">Aucune intervention</div>':`<div class="tw"><table class="dt"><thead><tr><th>!</th><th>N° BT</th><th>Date</th><th>Résidence</th><th>Catégorie</th><th>Description</th><th>Locataire</th><th>Tél.</th><th>Montant HT</th><th>Statut</th></tr></thead><tbody>`+ms.map(m=>{const k=CK[m.cat]||'tc',s=ST.find(x=>x.k===m.sta)||ST[0];return`<tr onclick="selM('${m.id}')" style="${m.urg?'background:#fff5f5':''}"><td style="text-align:center">${m.urg?'<span class="urg-badge" style="padding:1px 5px">🔴</span>':''}</td><td class="mn">${m.ref||'—'}</td><td>${m.dat||'—'}</td><td style="font-size:11px;font-weight:600;color:var(--tx2)">${m.res&&m.resname?`<span onclick="event.stopPropagation();openResidence('${m.res}')" style="color:var(--or);font-weight:700;cursor:pointer;text-decoration:underline dotted">${m.resname}</span>`:(m.resname||'—')}</td><td><span class="bdg b-${k}">${m.cat}</span></td><td>${m.des.slice(0,45)}${m.des.length>45?'…':''}</td><td>${m.loc||'—'}</td><td class="mn">${m.tel||'—'}</td><td style="font-weight:700;color:#16a34a">${m.mnt?m.mnt+' €':'—'}</td><td><span class="sb ${SC[m.sta]}">${s.l}</span></td></tr>`;}).join('')+'</tbody></table></div>';
   sv(D.view);
 }
 function selM(id){D.sel=id;renderList(D.curBai);const m=D.mis.find(x=>x.id===id);if(m)showDet(m);setTimeout(()=>{document.getElementById('detPanel').scrollIntoView({behavior:'smooth',block:'nearest'});},80);}
@@ -946,7 +988,7 @@ function showDet(m){
       <div><div class="il">Date</div><div class="iv">${m.dat||'—'}</div></div>
       <div><div class="il">Délai</div><div class="iv" style="font-size:12px">${m.del||'—'}</div></div>
       <div><div class="il">Montant HT</div><div class="iv" style="font-size:18px;font-weight:800;color:#16a34a">${m.mnt?m.mnt+' €':'—'}</div></div>
-      <div><div class="il">Résidence</div><div class="iv" style="color:var(--tx2)">${m.resname||'—'}</div></div>
+      <div><div class="il">Résidence</div><div class="iv">${m.res&&m.resname?`<span onclick="openResidence('${m.res}')" style="color:var(--or);font-weight:700;cursor:pointer">🏘 ${m.resname} ↗</span>`:(m.resname||'—')}</div></div>
     </div></div></div>
     <div class="dw"><div class="dw-h">Intervenants</div><div class="dw-b"><div class="ig" style="grid-template-columns:1fr">
       <div><div class="il">Demandeur</div><div class="iv">${m.dem||'—'}</div></div>
@@ -1433,6 +1475,266 @@ function renderAttachmentsFull(attachments, missionId){
       </div>
       ${a.data?`<a href="${a.data}" download="${a.name}" class="btn btn-g" style="padding:4px 10px;font-size:11px">↓ Télécharger</a>`:''}
     </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════
+// PAGE RÉSIDENCE
+// ════════════════════════════════════════════════════════
+let curRes = null; // {id, bai, name, adr}
+let curResTab = 'interventions';
+
+function openResidence(resId){
+  const r = D.res.find(x=>x.id===resId);
+  if(!r) return;
+  curRes = r;
+  curResTab = 'interventions';
+  renderResidencePage();
+}
+
+function openAddForRes(){
+  openAdd();
+  // Pré-remplir bailleur et résidence
+  if(curRes){
+    document.getElementById('f-bai').value = curRes.bai;
+    updateResSelect();
+    document.getElementById('f-res').value = curRes.id;
+  }
+}
+
+function renderResidencePage(){
+  if(!curRes) return;
+  showPage('pageResidence');
+  document.getElementById('hdrBack').style.display='flex';
+
+  const b = getBail(curRes.bai);
+  const mis = D.mis.filter(m=>m.res===curRes.id);
+
+  document.getElementById('resEyebrow').textContent = b?.name || '';
+  document.getElementById('resName').textContent = curRes.name;
+  document.getElementById('resCount').textContent = ` — ${mis.length} intervention${mis.length>1?'s':''}`;
+
+  // Bouton retour bailleur
+  const btn = document.getElementById('resBailBtn');
+  btn.textContent = `← ${b?.name||'Bailleur'}`;
+  btn.onclick = () => openBailleur(curRes.bai);
+
+  // Stats
+  const rows = [{k:'tot',l:'Total',n:mis.length,sc:'var(--tx)',sbg:'var(--bg3)'},
+    ...ST.map(s=>({k:s.k,l:s.l,n:mis.filter(m=>m.sta===s.k).length,sc:s.sc,sbg:s.sbg}))];
+  document.getElementById('resStats').innerHTML = rows.map(r=>
+    `<div class="bp-stat" style="--sc:${r.sc};--sbg:${r.sbg}">
+      <div class="bp-stat-n" style="color:${r.sc}">${r.n}</div>
+      <div class="bp-stat-l">${r.l}</div>
+    </div>`
+  ).join('');
+
+  switchResTab(curResTab);
+}
+
+function switchResTab(tab){
+  curResTab = tab;
+  // Mettre à jour les onglets
+  ['interventions','stats','docs'].forEach(t=>{
+    const btn = document.getElementById('tab-'+t);
+    if(btn){
+      btn.style.color = t===tab ? 'var(--or)' : 'var(--tx3)';
+      btn.style.borderBottom = t===tab ? '2px solid var(--or)' : 'none';
+      btn.style.marginBottom = t===tab ? '-2px' : '0';
+    }
+  });
+
+  const mis = D.mis.filter(m=>m.res===curRes?.id);
+  const el = document.getElementById('resTabContent');
+
+  if(tab==='interventions'){
+    el.innerHTML = renderResInterventions(mis);
+  } else if(tab==='stats'){
+    el.innerHTML = renderResStats(mis);
+  } else if(tab==='docs'){
+    el.innerHTML = '<div id="resDocs"><div style="text-align:center;padding:20px;color:var(--tx3);font-size:13px">⏳ Chargement des documents...</div></div>';
+    loadAllResAttachments(mis).then(()=>{});
+  }
+}
+
+function renderResInterventions(mis){
+  if(!mis.length) return '<div class="nr">Aucune intervention pour cette résidence</div>';
+  return mis.map(m=>{
+    const k=CK[m.cat]||'tc', s=ST.find(x=>x.k===m.sta)||ST[0];
+    return `<div class="mcard" onclick="selMRes('${m.id}',this)" style="cursor:pointer">
+      <div class="mcard-inner">
+        <div>
+          <div class="mcard-ref">${m.ref||'—'} · ${m.dat||''}${m.rec?' · Récl. '+m.rec:''}</div>
+          <div class="mcard-title">${m.des.length>80?m.des.slice(0,80)+'…':m.des}</div>
+          <div class="mcard-meta">
+            ${m.urg?'<span class="urg-badge">🔴 URGENT</span>':''}
+            <span class="bdg b-${k}">${m.cat}</span>
+            ${m.loc?`<span style="font-size:11px;color:var(--tx3)">👤 ${m.loc}</span>`:''}
+          </div>
+        </div>
+        <div class="mcard-r">
+          <span class="sb ${SC[m.sta]}">${s.l}</span>
+          ${m.mnt?`<span style="font-size:14px;font-weight:700;color:#16a34a">${m.mnt} €</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selMRes(id, card){
+  document.querySelectorAll('#resTabContent .mcard').forEach(c=>c.classList.remove('on'));
+  card.classList.add('on');
+  const m = D.mis.find(x=>x.id===id);
+  if(!m) return;
+  // Ouvrir dans le bailleur pour profiter de showDet complet
+  D.curBai = m.bai;
+  openBailleur(m.bai);
+  setTimeout(()=>selM(id), 300);
+}
+
+function renderResStats(mis){
+  if(!mis.length) return '<div class="nr">Aucune donnée</div>';
+
+  // Grouper par mois (12 derniers mois)
+  const now = new Date();
+  const months = [];
+  for(let i=11;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}).replace(' ','<br>');
+    months.push({key, label, count:0, cats:{}});
+  }
+  mis.forEach(m=>{
+    if(!m.dat) return;
+    const key = m.dat.slice(0,7);
+    const mo = months.find(x=>x.key===key);
+    if(mo){
+      mo.count++;
+      mo.cats[m.cat] = (mo.cats[m.cat]||0)+1;
+    }
+  });
+
+  const maxVal = Math.max(...months.map(m=>m.count), 1);
+
+  // Graphique en barres
+  const bars = months.map(mo=>{
+    const h = mo.count ? Math.max(8, Math.round(mo.count/maxVal*100)) : 2;
+    const color = mo.count ? 'var(--or)' : 'var(--bg4)';
+    return `<div class="month-col">
+      <div class="month-val">${mo.count||''}</div>
+      <div class="month-bar-fill" style="height:${h}px;background:${color};width:100%"></div>
+      <div class="month-label">${mo.label}</div>
+    </div>`;
+  }).join('');
+
+  // Tableau des stats par catégorie
+  const catStats = CA.map(c=>{
+    const n = mis.filter(m=>m.cat===c).length;
+    const k = CK[c];
+    const pct = mis.length ? Math.round(n/mis.length*100) : 0;
+    return {c,k,n,pct};
+  }).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+
+  // Stats par mois (tableau)
+  const monthTable = months.filter(m=>m.count>0).reverse().slice(0,6).map(mo=>{
+    const cats = Object.entries(mo.cats).map(([c,n])=>`<span class="bdg b-${CK[c]||'tc'}">${c} (${n})</span>`).join(' ');
+    return `<tr>
+      <td style="font-weight:600">${mo.key}</td>
+      <td style="font-weight:800;color:var(--or);font-size:18px">${mo.count}</td>
+      <td>${cats}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="dw" style="margin-bottom:14px">
+      <div class="dw-h">📊 Interventions par mois (12 derniers mois)</div>
+      <div class="dw-b">
+        <div class="month-bar">${bars}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="dw">
+        <div class="dw-h">Par catégorie</div>
+        <div class="dw-b">
+          ${catStats.map(({c,k,n,pct})=>`
+            <div class="bar-row">
+              <div class="bar-top">
+                <span class="bar-lbl"><span class="bdg b-${k}">${c}</span></span>
+                <span class="bar-val">${n}</span>
+              </div>
+              <div class="bar-tr"><div class="bar-fi" style="width:${pct}%;background:${CLC[k].c}"></div></div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="dw">
+        <div class="dw-h">Par statut</div>
+        <div class="dw-b">
+          ${ST.map(s=>{
+            const n=mis.filter(m=>m.sta===s.k).length;
+            const pct=mis.length?Math.round(n/mis.length*100):0;
+            return `<div class="bar-row">
+              <div class="bar-top"><span class="bar-lbl">${s.l}</span><span class="bar-val">${n}</span></div>
+              <div class="bar-tr"><div class="bar-fi" style="width:${pct}%;background:${s.sc}"></div></div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+    ${monthTable?`<div class="dw"><div class="dw-h">Détail mensuel</div><div class="dw-b"><table class="dt"><thead><tr><th>Mois</th><th>Nb</th><th>Catégories</th></tr></thead><tbody>${monthTable}</tbody></table></div></div>`:''}
+  `;
+}
+
+async function loadAllResAttachments(mis){
+  const el = document.getElementById('resDocs');
+  if(!el) return;
+
+  // Charger les PJ de toutes les interventions de la résidence
+  const allAttach = [];
+  for(const m of mis){
+    const atts = await loadAttachments(m.id);
+    if(atts && atts.length){
+      allAttach.push({mission:m, attachments:atts});
+    }
+  }
+
+  if(!allAttach.length){
+    el.innerHTML = '<div class="nr">📁 Aucun document pour cette résidence</div>';
+    return;
+  }
+
+  el.innerHTML = allAttach.map(({mission:m, attachments:atts})=>{
+    const s = ST.find(x=>x.k===m.sta)||ST[0];
+    const k = CK[m.cat]||'tc';
+    const docs = atts.map(a=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#fff;border:1px solid var(--brd);border-radius:var(--r);margin-bottom:5px">
+        ${a.data && a.type && a.type.startsWith('image/')
+          ? `<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;cursor:pointer" onclick="window.open('${a.data}')">`
+          : `<div style="width:40px;height:40px;background:var(--bg4);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:20px">${a.type&&a.type.includes('pdf')?'📄':'📎'}</div>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.name}</div>
+          <div style="font-size:10px;color:var(--tx3)">${(a.size/1024).toFixed(0)} KB · ${new Date(a.uploadedAt||Date.now()).toLocaleDateString('fr-FR')}</div>
+        </div>
+        ${a.data?`<a href="${a.data}" download="${a.name}" class="btn btn-g" style="padding:3px 9px;font-size:11px">↓</a>`:''}
+      </div>`).join('');
+
+    return `<div class="doc-folder">
+      <div class="doc-folder-hdr">
+        <span class="bdg b-${k}">${m.cat}</span>
+        <span class="sb ${SC[m.sta]}">${s.l}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--tx);flex:1">${m.des.slice(0,50)}${m.des.length>50?'…':''}</span>
+        <span style="font-size:11px;color:var(--tx3)">${m.dat||''}</span>
+        <span style="font-size:11px;color:var(--tx3);margin-left:6px">${atts.length} doc${atts.length>1?'s':''}</span>
+      </div>
+      <div class="doc-folder-body">${docs}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════
+// Rendre les résidences cliquables dans les cartes
+// ════════════════════════════════════════════════════════
+// On surcharge renderResidencesList pour ajouter le lien
+function makeResClickable(resId, name){
+  return `<span onclick="openResidence('${resId}')" style="cursor:pointer;color:var(--or);font-weight:700;text-decoration:underline dotted;text-underline-offset:3px" title="Voir la résidence">${name}</span>`;
 }
 
 init();
