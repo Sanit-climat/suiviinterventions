@@ -1346,8 +1346,26 @@ function xpdf(raw){
     m = t.match(/Description\s+([^\n]{5,150})/i);
     if(m) ex.des = m[1].trim();
   } else {
-    m = t.match(/D[EÉ]SIGNATION\s+UNIT[EÉ][\s\S]{0,60}?((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|V[eé]rification|D[eé]bouchage|Nettoyage|Installation|Changement)[^\d€]{15,250}?)(?:\d|FOR|ENS|TOTAL|H\.T\.)/i);
-    if(m) ex.des=m[1].replace(/\s+/g,' ').trim();
+    // Erilia : format "CODE_BPU Libellé\nDescription complémentaire"
+    // Ex: "PL2-3 Recherche d'une fuite d'eau...\nRDF SUSPICION INFILTRATIONS..."
+    // 1. Chercher dans le tableau POUR LE MODULE
+    m = t.match(/POUR\s+LE\s+MODULE\s+(PL[\w\-]+)\s+([^\n]{10,150}?)\s+(?:FOR|ML|U\s|M2)/i);
+    if(m){
+      ex.des = m[1] + ' — ' + m[2].replace(/\s+/g,' ').trim();
+      // Description complémentaire (ligne en majuscules après le code et libellé)
+      const afterPrice = t.match(/(?:FOR|ML|U)\s+[\d,\.]+\s+[\d,\.]+\s+[\d,\.]+\s*([A-Z][^a-z\d]{10,150}?)(?=\s*TOTAL|\s*T\.V|\s*AFFECTATION)/);
+      if(afterPrice) ex.des += '\n' + afterPrice[1].replace(/\s+/g,' ').trim();
+    }
+    // 2. Chercher code BPU suivi de description (format général Erilia)
+    if(!ex.des){
+      m = t.match(/(PL[\d]+-[\dA-Z]+)\s+([A-Za-zÀ-ÿ][^\d]{15,200}?)(?:FOR|ML|U\s|M2|\d{1,4},\d{2})/i);
+      if(m) ex.des = m[1] + ' — ' + m[2].replace(/\s+/g,' ').trim();
+    }
+    // 3. Fallback : chercher désignation dans tableau standard
+    if(!ex.des){
+      m = t.match(/D[EÉ]SIGNATION\s+UNIT[EÉ][\s\S]{0,60}?((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|V[eé]rification|D[eé]bouchage|Nettoyage|Installation|Changement)[^\d€]{15,250}?)(?:\d|FOR|ENS|TOTAL|H\.T\.)/i);
+      if(m) ex.des=m[1].replace(/\s+/g,' ').trim();
+    }
     if(!ex.des){ m = t.match(/((?:Fourniture|Remplacement|R[eé]paration|Pose|D[eé]pose|Changement|Trav\.|Installation)\s+[^\d€]{10,200})/i); if(m) ex.des=m[1].replace(/\s+/g,' ').trim(); }
   }
 
