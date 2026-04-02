@@ -83,7 +83,7 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);c
 .page-title span{color:var(--or)}
 
 .gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:30px}
-.gstat{background:#fff;border:1px solid var(--brd);border-left:4px solid var(--gc,var(--or));border-radius:var(--rl);padding:16px 18px;box-shadow:0 2px 8px rgba(29,78,216,.06)}
+.gstat{background:#fff;border:1px solid var(--brd);border-left:4px solid var(--gc,var(--or));border-radius:var(--rl);padding:16px 18px;box-shadow:0 2px 8px rgba(29,78,216,.06);cursor:pointer;transition:transform .15s,box-shadow .15s}.gstat:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(29,78,216,.12)}
 .gstat-n{font-size:36px;font-weight:800;line-height:1;color:var(--gc,var(--or))}
 .gstat-l{font-size:11px;color:var(--tx3);margin-top:5px;font-weight:600}
 
@@ -316,6 +316,14 @@ firebase.initializeApp({
     <div class="page-eyebrow">Tableau de bord</div>
     <div class="page-title">Suivi des <span>interventions</span></div>
     <div class="gstats" id="gstats"></div>
+    <!-- Section toutes interventions filtrées -->
+    <div id="homeFilter" style="display:none;margin-bottom:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:15px;font-weight:700;color:var(--tx)" id="homeFilterTitle">Interventions</div>
+        <button class="btn btn-g" style="font-size:11px" onclick="clearHomeFilter()">× Fermer</button>
+      </div>
+      <div id="homeFilterList"></div>
+    </div>
     <div class="sec-bar"><div class="sec-label">Bailleurs</div></div>
     <div class="bl-grid" id="blGrid"></div>
   </div>
@@ -332,7 +340,11 @@ firebase.initializeApp({
         <div class="scard-body" id="bailleursList"></div>
       </div>
       <div class="scard">
-        <div class="scard-hdr"><div class="scard-title">Résidences</div><button class="btn-sm" onclick="openAddResidence()">+ Nouvelle</button></div>
+        <div class="scard-hdr"><div class="scard-title">Résidences</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-sm" onclick="resetResidences()" style="background:var(--orbg);color:var(--or);border-color:var(--orbrd)" title="Recharger toutes les résidences depuis la base">↺ Réinitialiser</button>
+            <button class="btn-sm" onclick="openAddResidence()">+ Nouvelle</button>
+          </div></div>
         <div class="scard-body">
           <div style="margin-bottom:12px"><select class="fs" id="resBailFilter" onchange="renderResidencesList()"><option value="">Tous les bailleurs</option></select></div>
           <div id="residencesList"></div>
@@ -516,13 +528,27 @@ function startListeners(){
 
 async function initDefaults(){
   const snap = await refBails.once('value');
-  if(!snap.val()){
+  const snapRes = await refRes.once('value');
+  const bailsEmpty = !snap.val();
+  const resCount = snapRes.val() ? Object.keys(snapRes.val()).length : 0;
+
+  if(bailsEmpty){
+    // Première installation : pousser bailleurs ET résidences
     const ub = {};
     DEFAULT_BAILLEURS.forEach(b => { const {id,...data} = b; ub[id] = data; });
     await refBails.update(ub);
+  }
+
+  if(resCount < 50){
+    // Résidences insuffisantes (ancienne version) : forcer la mise à jour complète
+    console.log('Mise à jour résidences:', resCount, '→', DEFAULT_RESIDENCES.length);
+    // Effacer les anciennes
+    await refRes.remove();
+    // Pousser toutes les nouvelles
     const ur = {};
     DEFAULT_RESIDENCES.forEach(r => { const {id,...data} = r; ur[id] = data; });
     await refRes.update(ur);
+    toast('✅ ' + DEFAULT_RESIDENCES.length + ' résidences chargées !');
   }
 }
 
@@ -589,10 +615,25 @@ function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.
 
 function renderHome(){
   showPage('pageHome');document.getElementById('hdrBack').style.display='none';
+  // Si Firebase n'a pas encore chargé les bailleurs, utiliser les défauts pour afficher qqch
+  const bails = D.bails.length > 0 ? D.bails : DEFAULT_BAILLEURS;
   const all=D.mis;
-  const gc=[[null,'Total',all.length],['#d97706','En attente',all.filter(m=>m.sta==='at').length],['#1d4ed8','Planifiées',all.filter(m=>m.sta==='pl').length],['#ea6c0a','En cours',all.filter(m=>m.sta==='ec').length],['#16a34a','Terminées',all.filter(m=>m.sta==='te').length],['#7c3aed','Facturées',all.filter(m=>m.sta==='fa').length]];
-  document.getElementById('gstats').innerHTML=gc.map(([c,l,n])=>`<div class="gstat" style="--gc:${c||'var(--or)'}"><div class="gstat-n">${n}</div><div class="gstat-l">${l}</div></div>`).join('');
-  document.getElementById('blGrid').innerHTML=D.bails.map(b=>{
+  const gc=[
+    {c:null,  l:'Total',      n:all.length,                              sta:null},
+    {c:'#d97706',l:'En attente', n:all.filter(m=>m.sta==='at').length,   sta:'at'},
+    {c:'#1d4ed8',l:'Planifiées', n:all.filter(m=>m.sta==='pl').length,   sta:'pl'},
+    {c:'#ea6c0a',l:'En cours',   n:all.filter(m=>m.sta==='ec').length,   sta:'ec'},
+    {c:'#16a34a',l:'Terminées',  n:all.filter(m=>m.sta==='te').length,   sta:'te'},
+    {c:'#7c3aed',l:'Facturées',  n:all.filter(m=>m.sta==='fa').length,   sta:'fa'},
+  ];
+  document.getElementById('gstats').innerHTML=gc.map(({c,l,n,sta})=>
+    `<div class="gstat" style="--gc:${c||'var(--or)'};cursor:pointer" onclick="filterHome('${sta||''}','${l}')" title="Voir les ${l.toLowerCase()}">
+      <div class="gstat-n">${n}</div>
+      <div class="gstat-l">${l}</div>
+      <div style="font-size:9px;color:var(--or);margin-top:4px;font-weight:600;opacity:.7">▼ voir</div>
+    </div>`
+  ).join('');
+  document.getElementById('blGrid').innerHTML=bails.map(b=>{
     const bm=all.filter(m=>m.bai===b.id),t=bm.length,ec=bm.filter(m=>m.sta==='ec').length,at=bm.filter(m=>m.sta==='at').length,cl=bm.filter(m=>m.sta==='te'||m.sta==='fa').length;
     const pct=t?Math.round(cl/t*100):0,rc=getResForBail(b.id).length;
     const cats=CA.map(c=>{const k=CK[c];const n=bm.filter(m=>m.cat===c).length;if(!n)return'';return`<span class="bl-cat" style="background:${CLC[k].bg};color:${CLC[k].c}">${c} (${n})</span>`;}).join('');
@@ -617,6 +658,88 @@ function renderHome(){
     </div>`;
   }).join('');
 }
+// ── FILTRE GLOBAL ACCUEIL ─────────────────────────────────────
+function filterHome(sta, label){
+  const all = D.mis;
+  const filtered = sta ? all.filter(m=>m.sta===sta) : all;
+  const section = document.getElementById('homeFilter');
+  const title = document.getElementById('homeFilterTitle');
+  const listEl = document.getElementById('homeFilterList');
+
+  title.textContent = label + ' — ' + filtered.length + ' intervention' + (filtered.length>1?'s':'') + ' (tous bailleurs)';
+  section.style.display = 'block';
+  section.scrollIntoView({behavior:'smooth', block:'start'});
+
+  if(!filtered.length){
+    listEl.innerHTML = '<div class="nr">Aucune intervention</div>';
+    return;
+  }
+
+  // Grouper par bailleur
+  const byBail = {};
+  filtered.forEach(m=>{
+    if(!byBail[m.bai]) byBail[m.bai]=[];
+    byBail[m.bai].push(m);
+  });
+
+  listEl.innerHTML = Object.entries(byBail).map(([bid, ms])=>{
+    const b = getBail(bid);
+    const col = b?.color || 'var(--or)';
+    const rows = ms.map(m=>{
+      const k=CK[m.cat]||'tc', s=ST.find(x=>x.k===m.sta)||ST[0];
+      return `<div class="mcard" onclick="openBailleur('${bid}');setTimeout(()=>selM('${m.id}'),400)"
+        style="margin-bottom:6px;cursor:pointer">
+        <div class="mcard-inner">
+          <div>
+            <div class="mcard-ref">${m.ref||'—'} · ${m.dat||''} ${m.rec?'· Récl. '+m.rec:''}</div>
+            <div class="mcard-title">${m.des.length>70?m.des.slice(0,70)+'…':m.des}</div>
+            <div class="mcard-meta">
+              <span class="bdg b-${k}">${m.cat}</span>
+              ${m.resname?`<span style="font-size:10px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 7px;border-radius:5px">🏘 ${m.resname}</span>`:''}
+              ${m.loc?`<span style="font-size:11px;color:var(--tx3)">👤 ${m.loc}</span>`:''}
+              ${m.adr?`<span style="font-size:11px;color:var(--tx3)">📍 ${m.adr.slice(0,35)}</span>`:''}
+            </div>
+          </div>
+          <div class="mcard-r">
+            <span class="sb ${SC[m.sta]}">${s.l}</span>
+            ${m.mnt?`<span style="font-size:13px;font-weight:700;color:#16a34a">${m.mnt} €</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid ${col}">
+        <div style="width:10px;height:10px;border-radius:3px;background:${col}"></div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">${b?.name||bid}</div>
+        <div style="font-size:11px;color:var(--tx3)">${ms.length} intervention${ms.length>1?'s':''}</div>
+        <button onclick="openBailleur('${bid}')" class="btn btn-g" style="margin-left:auto;padding:3px 10px;font-size:11px">Ouvrir →</button>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+
+function clearHomeFilter(){
+  document.getElementById('homeFilter').style.display='none';
+}
+
+async function resetResidences(){
+  if(!confirm('Réinitialiser toutes les résidences avec la liste complète (' + DEFAULT_RESIDENCES.length + ' résidences) ?')) return;
+  setStatus('⏳ Chargement...','#d97706');
+  try {
+    await refRes.remove();
+    const ur = {};
+    DEFAULT_RESIDENCES.forEach(r => { const {id,...data} = r; ur[id] = data; });
+    await refRes.update(ur);
+    toast('✅ ' + DEFAULT_RESIDENCES.length + ' résidences chargées !');
+    setStatus('🟢 Connecté','#16a34a');
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+    setStatus('🔴 Erreur','#dc2626');
+  }
+}
+
 function goHome(){D.curBai=null;D.sel=null;D.fc=null;D.fs=null;renderHome();}
 
 function goSettings(){
