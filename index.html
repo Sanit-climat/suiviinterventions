@@ -313,9 +313,9 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);c
 .cdot.sel{border-color:var(--tx);box-shadow:0 0 0 2px #fff}
 </style>
 <!-- Firebase SDK -->
-<script src="./InterTrack v20260402_0623_files/bpu.js.téléchargement"></script>
-<script src="./InterTrack v20260402_0623_files/firebase-app-compat.js.téléchargement"></script>
-<script src="./InterTrack v20260402_0623_files/firebase-database-compat.js.téléchargement"></script>
+<script src="./bpu.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
 firebase.initializeApp({
   apiKey:        "AIzaSyDRgVVeqwplx2l6Tgv0Q2KalxPO_0iXeRE",
@@ -1072,6 +1072,8 @@ const DB_URL = 'https://interventions-a-programmer-default-rtdb.europe-west1.fir
 const refMis   = firebase.database().ref('interventions');
 const refBails = firebase.database().ref('bailleurs');
 const refRes   = firebase.database().ref('residences');
+
+let pendingAttachments = [];
 
 function setStatus(msg, color){
   const el = document.getElementById('fbStatus');
@@ -2103,7 +2105,6 @@ function xpdf(raw){
 
 
 // ── PIÈCES JOINTES ───────────────────────────────────────────
-let pendingAttachments = []; // {file, name, size, preview}
 
 function addAttachFiles(files){
   Array.from(files).forEach(file=>{
