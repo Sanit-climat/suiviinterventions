@@ -795,10 +795,57 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 async function save(){
   const bai=document.getElementById('f-bai').value,cat=document.getElementById('f-cat').value,des=document.getElementById('f-des').value.trim(),adr=document.getElementById('f-adr').value.trim();
   if(!cat||!des||!adr){alert('Champs obligatoires : Catégorie, Description, Adresse');return;}
+  const ref=document.getElementById('f-ref').value.trim();
+  const loc=document.getElementById('f-loc').value.trim();
+  // Vérification doublons
+  const others=D.mis.filter(m=>m.id!==D.eid);
+  // Helper fusion : applique les champs non vides du formulaire sur l'intervention existante
+  async function fusionner(existingId, newData){
+    const existing=D.mis.find(m=>m.id===existingId);
+    if(!existing)return false;
+    const merged={};
+    const fields=['dat','ref','rec','cat','des','dem','loc','tel','adr','del','mnt','not','res','resname','bai','sta'];
+    fields.forEach(k=>{
+      const nv=newData[k]||''; const ev=existing[k]||'';
+      // Priorité au nouveau si non vide, sinon garde l'ancien
+      merged[k]=nv||ev;
+    });
+    // Notes : on concatène si les deux sont remplies et différentes
+    if(existing.not&&newData.not&&existing.not.trim()!==newData.not.trim()){
+      merged.not=existing.not.trim()+' | '+newData.not.trim();
+    }
+    try{await fbUpdateMission(existingId,merged);}catch(e){alert('Erreur fusion : '+e.message);return false;}
+    closeModal('modal');D.curBai=newData.bai;toast('\u2705 Intervention fusionn\u00e9e !');
+    return true;
+  }
+  if(ref){
+    const dupRef=others.find(m=>m.ref&&m.ref.toLowerCase()===ref.toLowerCase());
+    if(dupRef){
+      const bail=D.bails.find(b=>b.id===dupRef.bai)?.name||dupRef.bai;
+      const msg='\u26a0\ufe0f N\u00b0 BT d\u00e9j\u00e0 existant !\n\nLe bon "'+ref+'" existe d\u00e9j\u00e0 :\n\u2022 Bailleur : '+bail+'\n\u2022 R\u00e9sidence : '+(dupRef.resname||'\u2014')+'\n\u2022 Description : '+dupRef.des.slice(0,60)+'\n\u2022 Date : '+(dupRef.dat||'\u2014')+'\n\nQue souhaitez-vous faire ?\n\n[OK] = Fusionner avec l\'existant\n[Annuler] = Ne pas enregistrer';
+      if(!confirm(msg))return;
+      const resId2=document.getElementById('f-res').value,resname2=resId2?D.res.find(r=>r.id===resId2)?.name:'';
+      const newData2={bai,dat:document.getElementById('f-dat').value,ref,rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc,tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId2||'',resname:resname2||''};
+      if(await fusionner(dupRef.id, newData2))return;
+    }
+  }
+  if(loc){
+    const desNorm=des.toLowerCase().replace(/\s+/g,' ');
+    const dupDes=others.find(m=>m.loc&&m.loc.toLowerCase()===loc.toLowerCase()&&m.des.toLowerCase().replace(/\s+/g,' ')===desNorm);
+    if(dupDes&&!ref){
+      const bail=D.bails.find(b=>b.id===dupDes.bai)?.name||dupDes.bai;
+      const stl=ST.find(s=>s.k===dupDes.sta)?.l||dupDes.sta;
+      const msg='\u26a0\ufe0f Intervention similaire d\u00e9tect\u00e9e !\n\nM\u00eame locataire et m\u00eame description d\u00e9j\u00e0 enregistr\u00e9s :\n\u2022 Locataire : '+loc+'\n\u2022 Bailleur : '+bail+'\n\u2022 Date : '+(dupDes.dat||'\u2014')+'\n\u2022 Statut : '+stl+'\n\nQue souhaitez-vous faire ?\n\n[OK] = Fusionner avec l\'existant\n[Annuler] = Ne pas enregistrer';
+      if(!confirm(msg))return;
+      const resId2=document.getElementById('f-res').value,resname2=resId2?D.res.find(r=>r.id===resId2)?.name:'';
+      const newData2={bai,dat:document.getElementById('f-dat').value,ref,rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc,tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId2||'',resname:resname2||''};
+      if(await fusionner(dupDes.id, newData2))return;
+    }
+  }
   const resId=document.getElementById('f-res').value,resname=resId?D.res.find(r=>r.id===resId)?.name:'';
-  const data={bai,dat:document.getElementById('f-dat').value,ref:document.getElementById('f-ref').value.trim(),rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc:document.getElementById('f-loc').value.trim(),tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId||'',resname:resname||''};
+  const data={bai,dat:document.getElementById('f-dat').value,ref,rec:document.getElementById('f-rec').value.trim(),cat,des,dem:document.getElementById('f-dem').value.trim(),loc,tel:document.getElementById('f-tel').value.trim(),adr,del:document.getElementById('f-del').value.trim(),mnt:document.getElementById('f-mnt').value.trim(),not:document.getElementById('f-not').value.trim(),sta:document.getElementById('f-sta').value,res:resId||'',resname:resname||''};
   try{await fbSaveMission(data);}catch(e){alert('Erreur Firebase : '+e.message);return;}
-  closeModal('modal');D.curBai=bai;toast('Intervention enregistrée ✓');
+  closeModal('modal');D.curBai=bai;toast('Intervention enregistr\u00e9e \u2713');
 }
 function clearPdf(){document.getElementById('pres').style.display='none';document.getElementById('pfg').innerHTML='';document.getElementById('pfi').value='';}
 function pdrop(e){e.preventDefault();document.getElementById('pdz').classList.remove('dv');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')ppdf(f);}
