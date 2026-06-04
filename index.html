@@ -1530,7 +1530,10 @@ function xpdf(raw){
   else if(tl.includes('erilia')&&tl.includes('marseille')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('marseille'));ex._bai=detectedBail?.name;}
   else if(tl.includes('erilia')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia'));ex._bai=detectedBail?.name;}
   if(detectedBail){document.getElementById('f-bai').value=detectedBail.id;updateResSelect();}
-  if(detectedBail){const ress=getResForBail(detectedBail.id);const matched=ress.find(r=>tl.includes(r.name.toLowerCase()));if(matched){document.getElementById('f-res').value=matched.id;ex._res=matched.name;}}
+  if(detectedBail){const ress=getResForBail(detectedBail.id);const matched=ress.find(r=>tl.includes(r.name.toLowerCase()));if(matched){document.getElementById('f-res').value=matched.id;ex._res=matched.name;
+    // Si la résidence a une adresse enregistrée, on l'utilise en priorité (plus fiable que l'extraction PDF)
+    if(matched.adr&&matched.adr.trim())ex.adr=matched.adr.trim();
+  }}
   if(!document.getElementById('f-cat').value){
     if(tl.match(/plomb|ballo|ecs|cumulus|robinet|canalisation|wc|toil|tuyau|chauffe|sanitaire|chasse.d.eau|mecanisme/))document.getElementById('f-cat').value='Plomberie';
     else if(tl.match(/maçon|b[eé]ton|fissure|[eé]tanch|toiture|infiltr/))document.getElementById('f-cat').value='Maçonnerie / Étanchéité';
