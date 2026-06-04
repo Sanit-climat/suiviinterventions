@@ -1358,9 +1358,51 @@ function xpdf(raw){
   const ex={};let m;
 
   // ── Détection du format ──────────────────────────────────────
-  const is3F     = tl.includes('3f sud') || tl.includes('groupe3f') || tl.includes('3fsud') || /bon\s+de\s+commande\s+r[eé]f[eé]rence\s*:/i.test(t);
-  const isVilogia = !is3F && (tl.includes('vilogia') || tl.includes('bon de commande'));
-  const isErilia  = tl.includes('erilia');
+  const is1001  = tl.includes('1001vieshabitat') || tl.includes('1001 vies habitat') || /n°\s*CGER\s*\d+/i.test(t);
+  const is3F     = !is1001 && (tl.includes('3f sud') || tl.includes('groupe3f') || tl.includes('3fsud') || /bon\s+de\s+commande\s+r[eé]f[eé]rence\s*:/i.test(t));
+  const isVilogia = !is3F && !is1001 && (tl.includes('vilogia') || tl.includes('bon de commande'));
+  const isErilia  = !is1001 && tl.includes('erilia');
+
+  // ── 1001 VIES HABITAT (Logis Méditerranée) ───────────────────
+  if(is1001){
+    // N° BON : "n° CGER 313608"
+    m=t.match(/n°\s*(CGER\s*\d+)/i);
+    if(m)ex.ref=m[1].replace(/\s+/g,' ').trim();
+    // DATE : "du 01-05-2026"
+    m=t.match(/n°\s*CGER[\s\d]+du\s+(\d{2})-(\d{2})-(\d{4})/i);
+    if(m)ex.dat=`${m[3]}-${m[2]}-${m[1]}`;
+    // DEMANDEUR : "Emetteur de la commande : MORO Adrien - UNITE GESTION MARSEILLE"
+    m=t.match(/Emetteur\s+de\s+la\s+commande\s*:\s*([^]+?)(?=\s+Interlocuteur|\s+R[eé]f[eé]rence\s+occupant|\s+N°\s+de\s+demande)/i);
+    if(m)ex.dem=m[1].trim();
+    // LOCATAIRE : "Référence occupant : CHARA HAMMA HASROUR RIMA - Téléphone"
+    m=t.match(/R[eé]f[eé]rence\s+occupant\s*:\s*([A-ZÀ-ÿ][A-ZÀ-ÿ\s\-]{3,60}?)\s*-\s*T[eé]l[eé]phone/i);
+    if(m)ex.loc=m[1].trim();
+    // TEL : mobile prioritaire, puis fixe
+    m=t.match(/T[eé]l[eé]phone\s+mobile\s*:\s*(0[67]\d{8})/i);
+    if(!m)m=t.match(/T[eé]l[eé]phone\s+mobile\s*:\s*(0[67](?:\s*\d{2}){4})/i);
+    if(!m)m=t.match(/T[eé]l[eé]phone\s+fixe\s*:\s*(0\d{9})/i);
+    if(m)ex.tel=m[1].replace(/\s/g,'');
+    // ADRESSE : voie + CP + ville (l'objet de la commande peut s'intercaler dans pdf.js)
+    m=t.match(/(\d+\s+(?:RUE|AVENUE|BOULEVARD|BD|IMPASSE|CHEMIN|ALL[EÉ]E|PLACE|ROUTE|TRAVERSE)\s+[A-ZÀ-ÿ][A-ZÀ-ÿ\s\-']{2,50}?)\s+(?:Objet\s+de\s+la\s+commande[^]+?)?(\d{5})\s+([A-ZÀ-ÿ][A-ZÀ-ÿ\s]{2,30}?)(?:\s+\d+|\s+March[eé]|\s+Contacts|$)/i);
+    if(m)ex.adr=`${m[1].trim()} ${m[2]} ${m[3].trim()}`.replace(/\s+/g,' ');
+    // OBJET / DESCRIPTION
+    m=t.match(/Objet\s+de\s+la\s+commande\s*:\s*([^]+?)(?=\s+\d{5}\s+[A-Z]|\s+March[eé]\s*:|\s+Contacts\s*:)/i);
+    if(m)ex.des=m[1].trim();
+    // RÉSIDENCE : "Résidence : 0570-MARSEILLE LE PATIO MASSILIA"
+    m=t.match(/R[eé]sidence\s*:\s*\d+\s*-\s*[A-ZÀ-ÿ]+\s+([A-ZÀ-ÿ][A-ZÀ-ÿ\s']{3,50}?)(?=\s+B[aâ]timent|\s+Bat|\s+Escalier|$)/i);
+    if(m)ex._res=m[1].trim();
+    // MONTANT HT : pdf.js inverse les chiffres droite→gauche dans le tableau ("71,5371,53" → "35,17")
+    m=t.match(/Montant\s+marchandises\s+([\d\s,\.]+?)\s+(?:Base|Montant\s+TVA|$)/i);
+    if(m){
+      const compact=m[1].replace(/\s+/g,'');
+      // Le bloc apparaît dupliqué (colonne TTC = colonne HT pour ce format) — on prend la première moitié inversée
+      const half=compact.slice(0,Math.ceil(compact.length/2));
+      const reversed=half.split('').reverse().join('');
+      // Validation : doit ressembler à un nombre avec virgule
+      if(/^\d+,\d{2}$/.test(reversed))ex.mnt=reversed;
+      else if(/^\d+[,\.]\d{2}$/.test(compact))ex.mnt=compact.replace('.',',');
+    }
+  }
 
   // ── N° BON ───────────────────────────────────────────────────
   // 3F : "Bon de commande référence : DP051-59" ou "N° Engagement: DP051-59"
@@ -1481,7 +1523,8 @@ function xpdf(raw){
 
   // ── BAILLEUR AUTO-DETECT ──────────────────────────────────────
   let detectedBail=null;
-  if(is3F){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('3f'));ex._bai=detectedBail?.name;}
+  if(is1001){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('logis'))||D.bails.find(b=>b.name.toLowerCase().includes('1001'))||D.bails.find(b=>b.name.toLowerCase().includes('vies habitat'));ex._bai=detectedBail?.name;}
+  else if(is3F){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('3f'));ex._bai=detectedBail?.name;}
   else if(tl.includes('vilogia')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('vilogia'));ex._bai=detectedBail?.name;}
   else if(tl.includes('erilia')&&tl.includes('avignon')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('avignon'));ex._bai=detectedBail?.name;}
   else if(tl.includes('erilia')&&tl.includes('marseille')){detectedBail=D.bails.find(b=>b.name.toLowerCase().includes('erilia')&&b.name.toLowerCase().includes('marseille'));ex._bai=detectedBail?.name;}
