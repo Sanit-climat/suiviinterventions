@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0050)https://sanit-climat.github.io/suiviinterventions/ -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>InterTrack</title>
-<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js" crossorigin="anonymous"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="./InterTrack_files/pdf.min.js.téléchargement" crossorigin="anonymous"></script>
+<link href="./InterTrack_files/css2" rel="stylesheet">
 <style>
 :root {
   --bg:   #f0f4ff;
@@ -256,8 +256,8 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);c
 .cdot.sel{border-color:var(--tx);box-shadow:0 0 0 2px #fff}
 </style>
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="./InterTrack_files/firebase-app-compat.js.téléchargement"></script>
+<script src="./InterTrack_files/firebase-database-compat.js.téléchargement"></script>
 <script>
 firebase.initializeApp({
   apiKey:        "AIzaSyDRgVVeqwplx2l6Tgv0Q2KalxPO_0iXeRE",
@@ -281,9 +281,14 @@ firebase.initializeApp({
   <div class="hdr-sub">Gestion des interventions</div>
   <div class="hdr-sp"></div>
   <div class="hdr-btn" id="hdrBack" onclick="goHome()" style="display:none">← Accueil</div>
+  <div class="hdr-btn" onclick="goGlobal()" style="background:var(--orbg);color:var(--or);border-color:var(--orbrd)">🔥 À traiter <span id="hdrGlobalCount" style="background:var(--or);color:#fff;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:800;margin-left:3px">0</span></div>
   <div class="hdr-btn" onclick="goSettings()">⚙ Paramètres</div>
-  <div id="fbStatus" style="font-size:11px;font-weight:600;color:#d97706;padding:0 8px;white-space:nowrap">⏳ Connexion...</div>
-  <div class="hdr-stats" id="hs"></div>
+  <div id="fbStatus" style="font-size: 11px; font-weight: 600; color: rgb(22, 163, 74); padding: 0px 8px; white-space: nowrap;">🟢 Connecté</div>
+  <div class="hdr-stats" id="hs">
+    <div class="hdr-stat"><div class="hdr-stat-n">1747</div><div class="hdr-stat-l">Total</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-n" style="color:#ea6c0a">6</div><div class="hdr-stat-l">En cours</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-n" style="color:#d97706">161</div><div class="hdr-stat-l">Attente</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-n" style="color:#16a34a">1093</div><div class="hdr-stat-l">Clôturées</div></div></div>
 </div>
 
 <!-- HOME -->
@@ -291,9 +296,279 @@ firebase.initializeApp({
   <div class="home">
     <div class="page-eyebrow">Tableau de bord</div>
     <div class="page-title">Suivi des <span>interventions</span></div>
-    <div class="gstats" id="gstats"></div>
+    <div class="gstats" id="gstats"><div class="gstat" style="--gc:var(--or)"><div class="gstat-n">1747</div><div class="gstat-l">Total</div></div><div class="gstat" style="--gc:#d97706"><div class="gstat-n">161</div><div class="gstat-l">En attente</div></div><div class="gstat" style="--gc:#1d4ed8"><div class="gstat-n">487</div><div class="gstat-l">Planifiées</div></div><div class="gstat" style="--gc:#ea6c0a"><div class="gstat-n">6</div><div class="gstat-l">En cours</div></div><div class="gstat" style="--gc:#16a34a"><div class="gstat-n">282</div><div class="gstat-l">Terminées</div></div><div class="gstat" style="--gc:#7c3aed"><div class="gstat-n">811</div><div class="gstat-l">Facturées</div></div></div>
     <div class="sec-bar"><div class="sec-label">Bailleurs</div></div>
-    <div class="bl-grid" id="blGrid"></div>
+    <div class="bl-grid" id="blGrid"><div class="bl-card" style="--blc:#dc2626" onclick="openBailleur(&#39;-OpBxVfXY600-55Px3At&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">SFHE</div>
+        <div class="bl-card-res">7 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">39</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">2</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">25</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:64%"></div></div>
+        <div class="bl-pct">64% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (39)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#7c3aed" onclick="openBailleur(&#39;-OpBxaxbaLsJRej1S91L&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">THM</div>
+        <div class="bl-card-res">77 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">319</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">42</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">234</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:73%"></div></div>
+        <div class="bl-pct">73% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (319)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#0369a1" onclick="openBailleur(&#39;-OpaHBx8qldVwrQLEMEn&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">ENGIE</div>
+        <div class="bl-card-res">0 résidence</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">0</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">0</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">0</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:0%"></div></div>
+        <div class="bl-pct">0% clôturées</div>
+        <div class="bl-cats"><span style="font-size:10px;color:var(--tx3)">Aucune intervention</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#7dd3fc" onclick="openBailleur(&#39;-OqnXJ9-u0hOB7ey_EkB&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">BATITECH</div>
+        <div class="bl-card-res">0 résidence</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">0</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">0</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">0</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:0%"></div></div>
+        <div class="bl-pct">0% clôturées</div>
+        <div class="bl-cats"><span style="font-size:10px;color:var(--tx3)">Aucune intervention</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#0ea5e9" onclick="openBailleur(&#39;-OsvHSZs0iyPjXZrAO-7&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">ERILIA - AIX GARDANNE</div>
+        <div class="bl-card-res">6 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">7</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">1</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">0</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:0%"></div></div>
+        <div class="bl-pct">0% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (7)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#0f766e" onclick="openBailleur(&#39;3f-sud&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">3F SUD</div>
+        <div class="bl-card-res">52 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">396</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">20</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">357</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:90%"></div></div>
+        <div class="bl-pct">90% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (309)</span><span class="bl-cat" style="background:rgba(217,119,6,.1);color:#b45309">Maçonnerie / Étanchéité (24)</span><span class="bl-cat" style="background:rgba(124,58,237,.1);color:#7c3aed">Peinture (2)</span><span class="bl-cat" style="background:rgba(22,163,74,.1);color:#16a34a">Menuiserie (55)</span><span class="bl-cat" style="background:rgba(249,115,22,.1);color:#ea6c0a">TCE (6)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#60a5fa" onclick="openBailleur(&#39;agence&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">Agence Immo</div>
+        <div class="bl-card-res">0 résidence</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">14</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">10</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">0</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:0%"></div></div>
+        <div class="bl-pct">0% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (6)</span><span class="bl-cat" style="background:rgba(217,119,6,.1);color:#b45309">Maçonnerie / Étanchéité (3)</span><span class="bl-cat" style="background:rgba(124,58,237,.1);color:#7c3aed">Peinture (3)</span><span class="bl-cat" style="background:rgba(22,163,74,.1);color:#16a34a">Menuiserie (2)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#0f9b8e" onclick="openBailleur(&#39;engie&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">ENGIE</div>
+        <div class="bl-card-res">0 résidence</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">0</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">0</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">0</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:0%"></div></div>
+        <div class="bl-pct">0% clôturées</div>
+        <div class="bl-cats"><span style="font-size:10px;color:var(--tx3)">Aucune intervention</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#f97316" onclick="openBailleur(&#39;erilia-avi&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">Erilia Avignon</div>
+        <div class="bl-card-res">84 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">194</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">12</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">133</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:69%"></div></div>
+        <div class="bl-pct">69% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (174)</span><span class="bl-cat" style="background:rgba(217,119,6,.1);color:#b45309">Maçonnerie / Étanchéité (9)</span><span class="bl-cat" style="background:rgba(124,58,237,.1);color:#7c3aed">Peinture (1)</span><span class="bl-cat" style="background:rgba(22,163,74,.1);color:#16a34a">Menuiserie (5)</span><span class="bl-cat" style="background:rgba(249,115,22,.1);color:#ea6c0a">TCE (5)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#38bdf8" onclick="openBailleur(&#39;erilia-mrs-est&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">Erilia Marseille Est</div>
+        <div class="bl-card-res">73 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">213</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">17</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">1</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">111</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:52%"></div></div>
+        <div class="bl-pct">52% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (192)</span><span class="bl-cat" style="background:rgba(217,119,6,.1);color:#b45309">Maçonnerie / Étanchéité (7)</span><span class="bl-cat" style="background:rgba(124,58,237,.1);color:#7c3aed">Peinture (2)</span><span class="bl-cat" style="background:rgba(22,163,74,.1);color:#16a34a">Menuiserie (9)</span><span class="bl-cat" style="background:rgba(249,115,22,.1);color:#ea6c0a">TCE (3)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#0ea5e9" onclick="openBailleur(&#39;erilia-mrs-sud&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">Erilia Marseille Sud</div>
+        <div class="bl-card-res">82 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">243</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">34</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">5</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">101</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:42%"></div></div>
+        <div class="bl-pct">42% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (214)</span><span class="bl-cat" style="background:rgba(217,119,6,.1);color:#b45309">Maçonnerie / Étanchéité (17)</span><span class="bl-cat" style="background:rgba(124,58,237,.1);color:#7c3aed">Peinture (1)</span><span class="bl-cat" style="background:rgba(22,163,74,.1);color:#16a34a">Menuiserie (8)</span><span class="bl-cat" style="background:rgba(249,115,22,.1);color:#ea6c0a">TCE (3)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#dc2626" onclick="openBailleur(&#39;logis-med&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">Logis Méditerranée</div>
+        <div class="bl-card-res">120 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">308</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">16</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">132</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:43%"></div></div>
+        <div class="bl-pct">43% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (272)</span><span class="bl-cat" style="background:rgba(217,119,6,.1);color:#b45309">Maçonnerie / Étanchéité (6)</span><span class="bl-cat" style="background:rgba(124,58,237,.1);color:#7c3aed">Peinture (8)</span><span class="bl-cat" style="background:rgba(22,163,74,.1);color:#16a34a">Menuiserie (12)</span><span class="bl-cat" style="background:rgba(249,115,22,.1);color:#ea6c0a">TCE (10)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#fb923c" onclick="openBailleur(&#39;part&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">Particuliers</div>
+        <div class="bl-card-res">0 résidence</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">1</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">1</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">0</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:0%"></div></div>
+        <div class="bl-pct">0% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(22,163,74,.1);color:#16a34a">Menuiserie (1)</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#16a34a" onclick="openBailleur(&#39;sfhe&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">SFHE</div>
+        <div class="bl-card-res">0 résidence</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">0</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">0</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">0</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:0%"></div></div>
+        <div class="bl-pct">0% clôturées</div>
+        <div class="bl-cats"><span style="font-size:10px;color:var(--tx3)">Aucune intervention</span></div>
+      </div>
+    </div><div class="bl-card" style="--blc:#3b82f6" onclick="openBailleur(&#39;vilogia&#39;)">
+      <div class="bl-card-stripe"></div>
+      <div class="bl-card-head">
+        <div class="bl-open">Ouvrir →</div>
+        <div class="bl-card-name">Vilogia</div>
+        <div class="bl-card-res">2 résidences</div>
+      </div>
+      <div class="bl-stats">
+        <div class="bl-s"><div class="bl-s-n" style="color:var(--tx)">13</div><div class="bl-s-l">Total</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#d97706">6</div><div class="bl-s-l">Attente</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#ea6c0a">0</div><div class="bl-s-l">En cours</div></div>
+        <div class="bl-s"><div class="bl-s-n" style="color:#16a34a">0</div><div class="bl-s-l">Clôturées</div></div>
+      </div>
+      <div class="bl-foot">
+        <div class="bl-bar"><div class="bl-bar-f" style="width:0%"></div></div>
+        <div class="bl-pct">0% clôturées</div>
+        <div class="bl-cats"><span class="bl-cat" style="background:rgba(29,78,216,.1);color:#1d4ed8">Plomberie (10)</span><span class="bl-cat" style="background:rgba(22,163,74,.1);color:#16a34a">Menuiserie (2)</span><span class="bl-cat" style="background:rgba(249,115,22,.1);color:#ea6c0a">TCE (1)</span></div>
+      </div>
+    </div></div>
   </div>
 </div>
 
@@ -338,8 +613,8 @@ firebase.initializeApp({
     <div class="vbar">
       <div class="bpf" id="bpFilters"></div>
       <div class="vc">
-        <button class="vb on" id="vbl" onclick="sv('l')">☰ Liste</button>
-        <button class="vb" id="vbt" onclick="sv('t')">⊞ Tableau</button>
+        <button class="vb on" id="vbl" onclick="sv(&#39;l&#39;)">☰ Liste</button>
+        <button class="vb" id="vbt" onclick="sv(&#39;t&#39;)">⊞ Tableau</button>
       </div>
     </div>
     <div id="vl"></div>
@@ -348,14 +623,40 @@ firebase.initializeApp({
   </div>
 </div>
 
+<!-- PAGE GLOBALE À TRAITER -->
+<div class="page" id="pageGlobal">
+  <div class="bp">
+    <div class="bp-hdr">
+      <div>
+        <div class="page-eyebrow">Vue transverse</div>
+        <span class="bp-name">🔥 Interventions à traiter</span>
+        <span class="bp-count" id="gloCount"></span>
+      </div>
+    </div>
+    <div class="bp-stats" id="gloStats"></div>
+    <div class="stitle">
+      <span class="stitle-txt">Filtrer par ville</span>
+      <span id="gloVilleBadge" style="display:none" class="fbadge" onclick="gloClearVille()">× Effacer ville</span>
+    </div>
+    <div class="bpf" id="gloVilles" style="margin-bottom:14px"></div>
+    <div class="stitle">
+      <span class="stitle-txt">Filtres</span>
+      <input type="text" class="srch" id="gloSearch" placeholder="🔍 Rechercher (réf, locataire, description...)" oninput="renderGlobal()">
+    </div>
+    <div class="bpf" id="gloFilters" style="margin-bottom:14px"></div>
+    <div id="gloList"></div>
+    <div id="gloDetPanel" style="display:none;margin-top:20px;border-top:2px solid var(--or);padding-top:20px"></div>
+  </div>
+</div>
+
 <!-- MODAL INTERVENTION -->
 <div class="ov" id="modal">
   <div class="modal">
-    <div class="mhdr"><div class="mttl" id="mttl">Nouvelle intervention</div><button class="mcls" onclick="closeModal('modal')">×</button></div>
+    <div class="mhdr"><div class="mttl" id="mttl">Nouvelle intervention</div><button class="mcls" onclick="closeModal(&#39;modal&#39;)">×</button></div>
     <div class="mbdy">
       <div class="pdf-box">
         <div class="pdf-ttl">📄 Import depuis un bon de travaux PDF</div>
-        <div class="pdf-dz" id="pdz" onclick="document.getElementById('pfi').click()" ondragover="event.preventDefault();this.classList.add('dv')" ondragleave="this.classList.remove('dv')" ondrop="pdrop(event)">
+        <div class="pdf-dz" id="pdz" onclick="document.getElementById(&#39;pfi&#39;).click()" ondragover="event.preventDefault();this.classList.add(&#39;dv&#39;)" ondragleave="this.classList.remove(&#39;dv&#39;)" ondrop="pdrop(event)">
           <div style="font-size:24px;margin-bottom:7px">📋</div>
           <div style="font-size:13px;font-weight:600;color:var(--tx2)">Déposer le PDF ici ou cliquer pour parcourir</div>
           <div style="font-size:11px;color:var(--tx3);margin-top:2px">Erilia, Vilogia, ou tout autre bon de travaux</div>
@@ -376,7 +677,7 @@ firebase.initializeApp({
         <div><label class="fl">Date <span>*</span></label><input class="fi" id="f-dat" type="date"></div>
       </div>
       <div class="fr2">
-        <div><label class="fl">Bailleur <span>*</span></label><select class="fs" id="f-bai" onchange="updateResSelect()"></select></div>
+        <div><label class="fl">Bailleur <span>*</span></label><select class="fs" id="f-bai" onchange="updateResSelect()"><option value="-OpBxVfXY600-55Px3At">SFHE</option><option value="-OpBxaxbaLsJRej1S91L">THM</option><option value="-OpaHBx8qldVwrQLEMEn">ENGIE</option><option value="-OqnXJ9-u0hOB7ey_EkB">BATITECH</option><option value="-OsvHSZs0iyPjXZrAO-7">ERILIA - AIX GARDANNE</option><option value="3f-sud">3F SUD</option><option value="agence">Agence Immo</option><option value="engie">ENGIE</option><option value="erilia-avi">Erilia Avignon</option><option value="erilia-mrs-est">Erilia Marseille Est</option><option value="erilia-mrs-sud">Erilia Marseille Sud</option><option value="logis-med">Logis Méditerranée</option><option value="part">Particuliers</option><option value="sfhe">SFHE</option><option value="vilogia">Vilogia</option></select></div>
         <div><label class="fl">Résidence</label><select class="fs" id="f-res"><option value="">— Aucune —</option></select></div>
       </div>
       <div class="fr2">
@@ -394,7 +695,7 @@ firebase.initializeApp({
           </select>
         </div>
       </div>
-      <div class="fr"><label class="fl">Description des travaux <span>*</span></label><textarea class="fta" id="f-des" rows="3" placeholder="Ex : Fourniture et pose d'un ballon ECS 150L..."></textarea></div>
+      <div class="fr"><label class="fl">Description des travaux <span>*</span></label><textarea class="fta" id="f-des" rows="3" placeholder="Ex : Fourniture et pose d&#39;un ballon ECS 150L..."></textarea></div>
       <div class="fr2">
         <div><label class="fl">Demandeur / Service</label><input class="fi" id="f-dem" placeholder="Erilia Agence Avignon"></div>
         <div><label class="fl">Locataire</label><input class="fi" id="f-loc" placeholder="Mme Dupont Marie"></div>
@@ -408,7 +709,7 @@ firebase.initializeApp({
       <div class="fr"><label class="fl">Notes internes</label><textarea class="fta" id="f-not" rows="2" placeholder="Matériaux, accès, observations..."></textarea></div>
     </div>
     <div class="mft">
-      <button class="btn btn-g" onclick="closeModal('modal')">Annuler</button>
+      <button class="btn btn-g" onclick="closeModal(&#39;modal&#39;)">Annuler</button>
       <button class="btn btn-p" onclick="save()">Enregistrer</button>
     </div>
   </div>
@@ -417,13 +718,13 @@ firebase.initializeApp({
 <!-- MODAL BAILLEUR -->
 <div class="ov" id="modalBailleur">
   <div class="modal modal-sm">
-    <div class="mhdr"><div class="mttl" id="mBailTtl">Nouveau bailleur</div><button class="mcls" onclick="closeModal('modalBailleur')">×</button></div>
+    <div class="mhdr"><div class="mttl" id="mBailTtl">Nouveau bailleur</div><button class="mcls" onclick="closeModal(&#39;modalBailleur&#39;)">×</button></div>
     <div class="mbdy">
       <div class="fr"><label class="fl">Nom <span>*</span></label><input class="fi" id="mb-name" placeholder="Ex : Paris Habitat"></div>
       <div class="fr"><label class="fl">Couleur</label><div class="cpick" id="colorPicker"></div></div>
     </div>
     <div class="mft">
-      <button class="btn btn-g" onclick="closeModal('modalBailleur')">Annuler</button>
+      <button class="btn btn-g" onclick="closeModal(&#39;modalBailleur&#39;)">Annuler</button>
       <button class="btn btn-p" onclick="saveBailleur()">Enregistrer</button>
     </div>
   </div>
@@ -432,14 +733,14 @@ firebase.initializeApp({
 <!-- MODAL RESIDENCE -->
 <div class="ov" id="modalResidence">
   <div class="modal modal-sm">
-    <div class="mhdr"><div class="mttl" id="mResTtl">Nouvelle résidence</div><button class="mcls" onclick="closeModal('modalResidence')">×</button></div>
+    <div class="mhdr"><div class="mttl" id="mResTtl">Nouvelle résidence</div><button class="mcls" onclick="closeModal(&#39;modalResidence&#39;)">×</button></div>
     <div class="mbdy">
       <div class="fr"><label class="fl">Bailleur <span>*</span></label><select class="fs" id="mr-bai"></select></div>
       <div class="fr"><label class="fl">Nom <span>*</span></label><input class="fi" id="mr-name" placeholder="Ex : Les Oliviers"></div>
       <div class="fr"><label class="fl">Adresse</label><input class="fi" id="mr-adr" placeholder="12 Rue des Pins, 13000 Marseille"></div>
     </div>
     <div class="mft">
-      <button class="btn btn-g" onclick="closeModal('modalResidence')">Annuler</button>
+      <button class="btn btn-g" onclick="closeModal(&#39;modalResidence&#39;)">Annuler</button>
       <button class="btn btn-p" onclick="saveResidence()">Enregistrer</button>
     </div>
   </div>
@@ -457,7 +758,7 @@ const DEFAULT_RESIDENCES=[
   {id:'r001',bai:'erilia-mrs',name:'Air Bel',adr:'13013 Marseille'},{id:'r002',bai:'erilia-mrs',name:'La Corniche',adr:'Marseille'},{id:'r003',bai:'erilia-mrs',name:'Les Figuiers',adr:'Marseille'},{id:'r004',bai:'erilia-mrs',name:'Résidence du Port',adr:'Marseille'},{id:'r005',bai:'erilia-mrs',name:'Les Oliviers',adr:'Marseille'},
   {id:'r010',bai:'erilia-avi',name:"L'Émeraude",adr:'84000 Avignon'},{id:'r011',bai:'erilia-avi',name:'Les Lavandes',adr:'84000 Avignon'},{id:'r012',bai:'erilia-avi',name:'Les Platanes',adr:'84000 Avignon'},{id:'r013',bai:'erilia-avi',name:'Résidence Mistral',adr:'84000 Avignon'},{id:'r014',bai:'erilia-avi',name:'Les Pins',adr:'84000 Avignon'}
 ];
-let D={mis:[],bails:[],res:[],curBai:null,sel:null,fc:null,fs:null,eid:null,ebid:null,erid:null,view:'l'};
+let D={mis:[],bails:[],res:[],curBai:null,sel:null,fc:null,fs:null,eid:null,ebid:null,erid:null,view:'l',gloVille:null,gloSta:null,gloCat:null,gloSel:null};
 
 // ── FIREBASE REALTIME DATABASE ────────────────────────────────
 const DB_URL = 'https://interventions-a-programmer-default-rtdb.europe-west1.firebasedatabase.app';
@@ -528,7 +829,13 @@ async function fbDelResidence(id){ await refRes.child(id).remove(); }
 function getBail(id){return D.bails.find(b=>b.id===id);}
 function getResForBail(bid){return D.res.filter(r=>r.bai===bid);}
 function today(){return new Date().toISOString().split('T')[0];}
-function refreshCurrent(){if(D.curBai)renderBailleur(D.curBai);else renderHome();renderHdrStats();}
+function refreshCurrent(){
+  const onGlo=document.getElementById('pageGlobal').classList.contains('active');
+  if(onGlo)renderGlobal();
+  else if(D.curBai)renderBailleur(D.curBai);
+  else renderHome();
+  renderHdrStats();
+}
 function init(){
   document.getElementById('f-dat').value=today();
   rebuildBailSelect('f-bai');
@@ -563,6 +870,8 @@ function renderHdrStats(){
     <div class="hdr-stat"><div class="hdr-stat-n" style="color:#ea6c0a">${ec}</div><div class="hdr-stat-l">En cours</div></div>
     <div class="hdr-stat"><div class="hdr-stat-n" style="color:#d97706">${at}</div><div class="hdr-stat-l">Attente</div></div>
     <div class="hdr-stat"><div class="hdr-stat-n" style="color:#16a34a">${cl}</div><div class="hdr-stat-l">Clôturées</div></div>`;
+  const gloN=D.mis.filter(m=>['at','pl','ec'].includes(m.sta)).length;
+  const gloEl=document.getElementById('hdrGlobalCount');if(gloEl)gloEl.textContent=gloN;
 }
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
 
@@ -597,6 +906,175 @@ function renderHome(){
   }).join('');
 }
 function goHome(){D.curBai=null;D.sel=null;D.fc=null;D.fs=null;renderHome();}
+
+// ── VUE GLOBALE "À TRAITER" ───────────────────────────────────
+function extractVille(adr){
+  if(!adr)return null;
+  // Nettoyer suffixe arrondissement (13e, 1er, 2ème...) en fin de chaîne
+  const adrClean=adr.replace(/\s+\d+\s*(er|e|ème|eme|°)?\s*$/i,'').trim();
+  // Capture "CP VILLE" en fin de chaîne — ex: "13015 MARSEILLE", "84000 Avignon"
+  const m=adrClean.match(/\b(\d{5})\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s\-']{1,40})\s*$/);
+  if(m){
+    return m[2].trim().replace(/\s+/g,' ').toUpperCase();
+  }
+  // Fallback : chercher juste un nom de ville en fin
+  const m2=adrClean.match(/([A-ZÀ-Ÿ][A-ZÀ-Ÿ\s\-]{2,30})\s*$/);
+  if(m2)return m2[1].trim().toUpperCase();
+  return null;
+}
+function goGlobal(){
+  D.curBai=null;D.sel=null;D.gloSel=null;
+  renderGlobal();
+}
+function renderGlobal(){
+  showPage('pageGlobal');document.getElementById('hdrBack').style.display='flex';
+  // Base : interventions At/Pl/Ec uniquement
+  const base=D.mis.filter(m=>['at','pl','ec'].includes(m.sta));
+  // ── Stats par statut (cliquables) ──
+  const stats=[
+    {k:null,l:'Total',n:base.length,c:'var(--or)'},
+    {k:'at',l:'En attente',n:base.filter(m=>m.sta==='at').length,c:'#d97706'},
+    {k:'pl',l:'Planifié',n:base.filter(m=>m.sta==='pl').length,c:'#1d4ed8'},
+    {k:'ec',l:'En cours',n:base.filter(m=>m.sta==='ec').length,c:'#ea6c0a'}
+  ];
+  document.getElementById('gloStats').innerHTML=stats.map(s=>{
+    const on=D.gloSta===s.k||(s.k===null&&!D.gloSta);
+    return `<div class="bp-stat${on?' active':''}" style="--sc:${s.c};--sbg:${s.c}1a" onclick="gloSetSta(${s.k?`'${s.k}'`:'null'})">
+      <div class="bp-stat-n" style="color:${s.c}">${s.n}</div>
+      <div class="bp-stat-l">${s.l}</div>
+    </div>`;
+  }).join('');
+  // ── Villes (compteurs sur base déjà filtrée par statut) ──
+  const afterSta=D.gloSta?base.filter(m=>m.sta===D.gloSta):base;
+  const villeMap={};
+  afterSta.forEach(m=>{
+    const v=extractVille(m.adr)||'— Inconnue —';
+    villeMap[v]=(villeMap[v]||0)+1;
+  });
+  const villes=Object.entries(villeMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('gloVilles').innerHTML=villes.length
+    ? villes.map(([v,n])=>`<span class="chip${D.gloVille===v?' on':''}" onclick="gloSetVille('${v.replace(/'/g,"\\'")}')">📍 ${v} <span style="opacity:.7;font-weight:700">${n}</span></span>`).join('')
+    : '<span style="font-size:11px;color:var(--tx3)">Aucune ville détectée</span>';
+  document.getElementById('gloVilleBadge').style.display=D.gloVille?'inline-block':'none';
+  // ── Filtres catégorie ──
+  document.getElementById('gloFilters').innerHTML=CA.map(c=>{
+    const k=CK[c];const n=afterSta.filter(m=>m.cat===c).length;
+    if(!n)return'';
+    return `<span class="chip ${k}${D.gloCat===c?' on':''}" onclick="gloSetCat('${c.replace(/'/g,"\\'")}')">${c} <span style="opacity:.7;font-weight:700">${n}</span></span>`;
+  }).join('');
+  // ── Liste filtrée finale ──
+  const q=(document.getElementById('gloSearch')?.value||'').trim().toLowerCase();
+  let list=base.slice();
+  if(D.gloSta)list=list.filter(m=>m.sta===D.gloSta);
+  if(D.gloVille)list=list.filter(m=>(extractVille(m.adr)||'— Inconnue —')===D.gloVille);
+  if(D.gloCat)list=list.filter(m=>m.cat===D.gloCat);
+  if(q)list=list.filter(m=>(m.ref||'').toLowerCase().includes(q)||(m.rec||'').toLowerCase().includes(q)||(m.loc||'').toLowerCase().includes(q)||(m.des||'').toLowerCase().includes(q)||(m.adr||'').toLowerCase().includes(q)||(m.resname||'').toLowerCase().includes(q));
+  // Tri : par date décroissante puis par statut (ec > pl > at)
+  const staOrder={ec:0,pl:1,at:2};
+  list.sort((a,b)=>{
+    const so=(staOrder[a.sta]??9)-(staOrder[b.sta]??9);
+    if(so)return so;
+    return (b.dat||'').localeCompare(a.dat||'');
+  });
+  document.getElementById('gloCount').textContent=` — ${list.length} intervention${list.length>1?'s':''}`;
+  // ── Cartes ──
+  if(!list.length){
+    document.getElementById('gloList').innerHTML='<div class="nr">Aucune intervention ne correspond aux filtres</div>';
+  } else {
+    document.getElementById('gloList').innerHTML=list.map(m=>{
+      const k=CK[m.cat]||'tc',s=ST.find(x=>x.k===m.sta)||ST[0];
+      const bail=D.bails.find(b=>b.id===m.bai);
+      const bailName=bail?.name||m.bai;
+      const bailColor=bail?.color||'#999';
+      const ville=extractVille(m.adr)||'';
+      const on=D.gloSel===m.id?' on':'';
+      return `<div class="mcard${on}" onclick="gloSelM('${m.id}')">
+        <div class="mcard-inner">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:${bailColor}22;color:${bailColor};border:1px solid ${bailColor}55">${bailName}</span>
+              ${m.resname?`<span style="font-size:10px;color:var(--tx3);font-weight:600">🏘 ${m.resname}</span>`:''}
+              ${ville?`<span style="font-size:10px;color:var(--or);font-weight:700">📍 ${ville}</span>`:''}
+            </div>
+            <div class="mcard-ref">${m.ref?'BT '+m.ref:''}${m.ref&&m.rec?' · ':''}${m.rec?'Récl. '+m.rec:''}${!m.ref&&!m.rec?'—':''}</div>
+            <div class="mcard-title">${m.des.length>110?m.des.slice(0,110)+'…':m.des}</div>
+            <div class="mcard-meta">
+              <span class="bdg b-${k}">${m.cat}</span>
+              ${m.loc?`<span style="font-size:11px;color:var(--tx2);font-weight:600">👤 ${m.loc}</span>`:''}
+              ${m.tel?`<span style="font-size:11px;color:var(--tx2);font-family:'JetBrains Mono',monospace">📞 ${m.tel}</span>`:''}
+              ${m.adr?`<span style="font-size:11px;color:var(--tx3)">${m.adr.length>50?m.adr.slice(0,50)+'…':m.adr}</span>`:''}
+            </div>
+          </div>
+          <div class="mcard-r">
+            <span class="sb ${SC[m.sta]}">${s.l}</span>
+            <span style="font-size:10px;color:var(--tx3);font-family:'JetBrains Mono',monospace">${m.dat||''}</span>
+            ${m.mnt?`<span style="font-size:12px;font-weight:800;color:#16a34a">${m.mnt} €</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  // Détail si sélection
+  if(D.gloSel){
+    const m=D.mis.find(x=>x.id===D.gloSel);
+    if(m)gloShowDet(m);
+  } else {
+    document.getElementById('gloDetPanel').style.display='none';
+  }
+}
+function gloSetSta(k){D.gloSta=(D.gloSta===k)?null:k;D.gloSel=null;renderGlobal();}
+function gloSetVille(v){D.gloVille=(D.gloVille===v)?null:v;D.gloSel=null;renderGlobal();}
+function gloSetCat(c){D.gloCat=(D.gloCat===c)?null:c;D.gloSel=null;renderGlobal();}
+function gloClearVille(){D.gloVille=null;D.gloSel=null;renderGlobal();}
+function gloSelM(id){D.gloSel=D.gloSel===id?null:id;renderGlobal();setTimeout(()=>{const dp=document.getElementById('gloDetPanel');if(dp.style.display!=='none')dp.scrollIntoView({behavior:'smooth',block:'nearest'});},80);}
+function gloShowDet(m){
+  // Réutilise la même structure que showDet mais cible gloDetPanel
+  const dp=document.getElementById('gloDetPanel');dp.style.display='block';
+  const k=CK[m.cat]||'tc',opts=ST.map(x=>`<option value="${x.k}"${m.sta===x.k?' selected':''}>${x.l}</option>`).join('');
+  const bail=D.bails.find(b=>b.id===m.bai);const bailName=bail?.name||m.bai;
+  dp.innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+    <div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;background:${bail?.color||'#999'}22;color:${bail?.color||'#999'};border:1px solid ${bail?.color||'#999'}55">${bailName}</span>
+        <span class="bdg b-${k}">${m.cat}</span>
+        ${m.resname?`<span style="font-size:11px;font-weight:600;background:var(--bg4);color:var(--tx2);padding:2px 9px;border-radius:5px">🏘 ${m.resname}</span>`:''}
+        ${m.ref?`<span class="bt-tag bt-bt">BT ${m.ref}</span>`:''}
+        ${m.rec?`<span class="bt-tag bt-rec">Récl. ${m.rec}</span>`:''}
+      </div>
+      <div style="font-size:20px;font-weight:800;color:var(--tx);line-height:1.25">${m.des.length>80?m.des.slice(0,80)+'…':m.des}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx3);margin-top:5px">${m.dat||''}${m.del?' · Délai : '+m.del:''}</div>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <select class="ssel" onchange="ust('${m.id}',this.value)">${opts}</select>
+      <button class="btn btn-g" onclick="openEdit('${m.id}')">✏️ Modifier</button>
+      <button class="btn btn-d" onclick="del('${m.id}')">🗑️</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+    <div class="dw"><div class="dw-h">Bon de travaux</div><div class="dw-b"><div class="ig" style="grid-template-columns:1fr 1fr">
+      <div><div class="il">N° Bon</div><div class="iv" style="font-family:'JetBrains Mono',monospace;font-size:12px">${m.ref||'—'}</div></div>
+      <div><div class="il">N° Réclamation</div><div class="iv" style="font-family:'JetBrains Mono',monospace;font-size:12px">${m.rec||'—'}</div></div>
+      <div><div class="il">Date</div><div class="iv">${m.dat||'—'}</div></div>
+      <div><div class="il">Délai</div><div class="iv" style="font-size:12px">${m.del||'—'}</div></div>
+      <div><div class="il">Montant HT</div><div class="iv" style="font-size:18px;font-weight:800;color:#16a34a">${m.mnt?m.mnt+' €':'—'}</div></div>
+      <div><div class="il">Résidence</div><div class="iv" style="color:var(--tx2)">${m.resname||'—'}</div></div>
+    </div></div></div>
+    <div class="dw"><div class="dw-h">Intervenants</div><div class="dw-b"><div class="ig" style="grid-template-columns:1fr">
+      <div><div class="il">Demandeur</div><div class="iv">${m.dem||'—'}</div></div>
+      <div><div class="il">Locataire</div><div class="iv">${m.loc||'—'}</div></div>
+      <div><div class="il">Téléphone</div><div class="iv">${m.tel?`<a href="tel:${m.tel}">${m.tel}</a>`:'—'}</div></div>
+    </div></div></div>
+  </div>
+  <div class="dw" style="margin-bottom:10px"><div class="dw-h">📍 Adresse d'intervention</div><div class="dw-b">
+    <div style="font-size:14px;font-weight:600">${m.adr||'—'}</div>
+    ${m.adr?`<a href="https://maps.google.com?q=${encodeURIComponent(m.adr)}" target="_blank" style="font-size:12px;color:var(--or);margin-top:5px;display:inline-block;font-weight:600">📍 Google Maps ↗</a>`:''}
+  </div></div>
+  <div class="dw" style="margin-bottom:10px"><div class="dw-h">Description complète</div><div class="dw-b"><div style="font-size:13px;line-height:1.75;color:var(--tx2);white-space:pre-wrap">${m.des}</div></div></div>
+  <div class="dw"><div class="dw-h">Notes internes</div><div class="dw-b">
+    <textarea class="ntxt" id="ntx" placeholder="Observations, matériaux, accès...">${m.not||''}</textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:9px"><button class="btn btn-p" onclick="snot('${m.id}')">Sauvegarder</button></div>
+  </div></div>`;
+}
 
 function goSettings(){
   showPage('pageSettings');document.getElementById('hdrBack').style.display='flex';
@@ -1026,4 +1504,5 @@ function xpdf(raw){
   else toast('⚠️ Aucune donnée reconnue');
 }
 init();
-</script></body></html>
+</script>
+</body></html>
